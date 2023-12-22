@@ -15,12 +15,22 @@
 #define TFT_DC        A4
 #define VCC 3
 #define GND 2
+#define outputA 6
+#define outputB 5
+#define buttonIn 4
+int aState;
+int aLastState;
+int degValue = 0;
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 void setup(void) {
 pinMode(VCC, OUTPUT);
 pinMode(GND, OUTPUT);
-
-
+digitalWrite(VCC, HIGH);
+digitalWrite(GND, LOW);
+pinMode(buttonIn,INPUT_PULLUP);
+  pinMode(outputA,INPUT);
+  pinMode(outputB,INPUT);
+  aLastState = digitalRead(outputA);
 
   tft.init(240, 320);
   tft.setTextWrap(true);
@@ -40,8 +50,21 @@ pinMode(GND, OUTPUT);
   tft.println("    m    r");
 }
 void loop() {
+aState = digitalRead(outputA);
+  if (aState != aLastState) {
+    if (digitalRead(outputB) != aState) {
+      degValue++;
+    } else {
+      degValue--;
+    }
 
-
+    if (degValue = 1){
+      
+    }
+  tft.fillScreen(ST77XX_BLACK);
+  tft.setCursor(5,5);
+  tft.println(degValue);
+  }
 }
 void testlines(uint16_t color) {
   tft.fillScreen(ST77XX_BLACK);
