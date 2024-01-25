@@ -44,7 +44,6 @@ class Base {
     short cursorIndex = 0;
     String title;
     String menuItems[4];
-    bool light = false;
 
     void highlightOption() {
       tft.setTextSize(3);
@@ -106,15 +105,13 @@ class Base {
           mainMenu->printMenu();
         }
       } else if (menuItems[cursorIndex] == "Light Mode" || menuItems[cursorIndex] == "Dark Mode") {
-        if (light == false) { 
+        if (menuItems[cursorIndex] == "Light Mode") { 
           color[6] = ST77XX_BLACK;
           color[7] = ST77XX_WHITE;
-          light = true;
           menuItems[2] = "Dark Mode";
-        } else if (light == true) {
+        } else if (menuItems[cursorIndex] == "Dark Mode") {
           color[7] = ST77XX_BLACK;
           color[6] = ST77XX_WHITE;
-          light = false;
           menuItems[2] = "Light Mode";
         }
         printMenu();
