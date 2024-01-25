@@ -37,9 +37,14 @@ Base* currentMenu;
 Base* settings;
 Base* devices;
 Base* mainMenu;
+Base* credits;
 
 class Base {
   public:
+    short cursorIndex = 0;
+    String title;
+    String menuItems[4];
+    bool light = false;
 
     void highlightOption() {
       tft.setTextSize(3);
@@ -54,11 +59,6 @@ class Base {
       tft.setCursor(5, 50 + (35 * cursorIndex));
       tft.print(menuItems[cursorIndex]);
     }
-
-    short cursorIndex = 0;
-    String title;
-    String menuItems[4];
-    bool light = false;
 
     void printMenu() {
       currentMenu = this;
@@ -102,7 +102,7 @@ class Base {
       } else if (menuItems[cursorIndex] == "Settings") {
         settings->printMenu();
       } else if (menuItems[cursorIndex] == "<< Back") {
-        if (title == "Devices" || title == "Settings") {
+        if (title == "Devices" || title == "Settings" || title == "Credits") {
           mainMenu->printMenu();
         }
       } else if (menuItems[cursorIndex] == "Light Mode" || menuItems[cursorIndex] == "Dark Mode") {
@@ -118,10 +118,10 @@ class Base {
           menuItems[2] = "Light Mode";
         }
         printMenu();
+      } else if (menuItems[cursorIndex] == "Credits") {
+        credits->printMenu();
       }
     }
-
-    Base() {}
 
     Base(String tt, String option1, String option2, String option3, String option4) {
       title = tt;
@@ -131,20 +131,16 @@ class Base {
       menuItems[3] = option4;
     }
 
-    Base(String tt, String option1, String option2, String option3, String option4, bool idk) {
-      title = tt;
-      menuItems[0] = option1;
-      menuItems[1] = option2;
-      menuItems[2] = option3;
-      menuItems[3] = option4;
+    Base(bool idk) {
       devices = new Base("Devices", "<< Back", "one", "two", "three");
       settings = new Base("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker Toggle");
-      mainMenu = new Base("Main Menu", "Devices", "Settings", "Roll Call", "About");
+      mainMenu = new Base("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
+      credits = new Base("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal");
       currentMenu = mainMenu;
     }
 };
 
-Base base = Base("Maiu", "Devs", "Set", "Roll ll", "Aout", false);
+Base base = Base(true);
 
 void setup(void) {
   pinMode(VCC, OUTPUT);
