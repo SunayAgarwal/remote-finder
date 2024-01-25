@@ -31,6 +31,13 @@ short down;
 short increment = 2;
 uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST77XX_BLUE, ST77XX_MAGENTA, ST77XX_WHITE, ST77XX_BLACK };  // Array of colors for easy access
 
+class Base;
+
+Base* currentMenu;
+Base* settings;
+Base* devices;
+Base* mainMenu;
+
 class Base {
   public:
 
@@ -51,8 +58,10 @@ class Base {
     short cursorIndex = 0;
     String title;
     String menuItems[4];
+    bool light = false;
 
     void printMenu() {
+      currentMenu = this;
       tft.fillScreen(color[7]);
       tft.setTextSize(3);
       tft.setTextColor(color[6]);
@@ -84,6 +93,34 @@ class Base {
       highlightOption();
     }
 
+    void selectOption() {
+      unHighlightOption();
+      highlightOption();
+      // this is the best way to do this because idk
+      if (menuItems[cursorIndex] == "Devices") {
+        devices->printMenu();
+      } else if (menuItems[cursorIndex] == "Settings") {
+        settings->printMenu();
+      } else if (menuItems[cursorIndex] == "<< Back") {
+        if (title == "Devices" || title == "Settings") {
+          mainMenu->printMenu();
+        }
+      } else if (menuItems[cursorIndex] == "Light Mode" || menuItems[cursorIndex] == "Dark Mode") {
+        if (light == false) { 
+          color[6] = ST77XX_BLACK;
+          color[7] = ST77XX_WHITE;
+          light = true;
+          menuItems[2] = "Dark Mode";
+        } else if (light == true) {
+          color[7] = ST77XX_BLACK;
+          color[6] = ST77XX_WHITE;
+          light = false;
+          menuItems[2] = "Light Mode";
+        }
+        printMenu();
+      }
+    }
+
     Base() {}
 
     Base(String tt, String option1, String option2, String option3, String option4) {
@@ -94,42 +131,20 @@ class Base {
       menuItems[3] = option4;
     }
 
-    Base(String tt, Base option1, Base option2, String option3, String option4) {
+    Base(String tt, String option1, String option2, String option3, String option4, bool idk) {
       title = tt;
-      menuItems[0] = option1.title;
-      menuItems[1] = option2.title;
+      menuItems[0] = option1;
+      menuItems[1] = option2;
       menuItems[2] = option3;
       menuItems[3] = option4;
+      devices = new Base("Devices", "<< Back", "one", "two", "three");
+      settings = new Base("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker Toggle");
+      mainMenu = new Base("Main Menu", "Devices", "Settings", "Roll Call", "About");
+      currentMenu = mainMenu;
     }
 };
 
-class MainMenu : public Base{
-  public:
-    MainMenu(String tt, Base option1, Base option2, String option3, String option4) {
-      title = tt;
-      menuItems[0] = option1.title;
-      menuItems[1] = option2.title;
-      menuItems[2] = option3;
-      menuItems[3] = option4;
-    }
-};
-
-class Interface {
-  public:
-    Base devices = Base("Devices", "<< Back", "one", "two", "three");
-    Base settings = Base("Settings", "<< Back", "Add a Device", "Light/Dark Mode", "Speaker Toggle");
-    Base mainMenu = Base("Main Menu", devices, settings, "Roll Call", "About");
-    Base currentMenu = mainMenu;
-
-    void select() {
-      currentMenu.unHighlightOption();
-      currentMenu.highlightOption();
-    }
-
-    Interface() {}
-};
-
-Interface interface = Interface();
+Base base = Base("Maiu", "Devs", "Set", "Roll ll", "Aout", false);
 
 void setup(void) {
   pinMode(VCC, OUTPUT);
@@ -145,7 +160,7 @@ void setup(void) {
   tft.setTextWrap(true);
   tft.setRotation(3);
   tft.fillScreen(ST77XX_BLACK);
-  interface.currentMenu.printMenu();
+  currentMenu->printMenu();
 }
 void loop() {
   aState = digitalRead(outputA);
@@ -153,7 +168,7 @@ void loop() {
   if (aState != aLastState) {
     if (digitalRead(outputB) != aState) {
       if (down == increment) {
-        interface.currentMenu.cursorDown();
+        currentMenu->cursorDown();
         down = 1;
       } else {
         down = ++down;
@@ -161,7 +176,7 @@ void loop() {
       }
     } else {
       if (up == increment) {
-        interface.currentMenu.cursorUp();
+        currentMenu->cursorUp();
         up = 1;
       } else {
         up = ++up;
@@ -170,7 +185,7 @@ void loop() {
     }
   }
   if (button == false && buttonLastState == true) {
-    interface.select();
+    currentMenu->selectOption();
   }
   aLastState = aState;
   buttonLastState = button;
