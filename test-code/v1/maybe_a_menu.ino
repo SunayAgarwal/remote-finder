@@ -42,6 +42,7 @@ Base* credits;
 class Base {
   public:
     short cursorIndex = 0;
+    short cursorMax = 3;
     String title;
     String menuItems[4];
 
@@ -77,7 +78,7 @@ class Base {
     void cursorDown() {
       unHighlightOption();
       ++cursorIndex;
-      if (cursorIndex > 3) {
+      if (cursorIndex > cursorMax) {
         --cursorIndex;
       }
       highlightOption();
@@ -128,11 +129,20 @@ class Base {
       menuItems[3] = option4;
     }
 
+    Base(String tt, String option1, String option2, String option3, String option4, int max) {
+      title = tt;
+      menuItems[0] = option1;
+      menuItems[1] = option2;
+      menuItems[2] = option3;
+      menuItems[3] = option4;
+      cursorMax = max;
+    }
+
     Base(bool idk) {
       devices = new Base("Devices", "<< Back", "one", "two", "three");
       settings = new Base("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker Toggle");
       mainMenu = new Base("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
-      credits = new Base("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal");
+      credits = new Base("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
       currentMenu = mainMenu;
     }
 };
