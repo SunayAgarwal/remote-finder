@@ -1,6 +1,0 @@
-main = menu(devices, settings)
-devices = menu(devices[])
-settings = menu(audio, deviceSettings)
-
-display(main)
-if(input = 
