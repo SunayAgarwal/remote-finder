@@ -10,6 +10,7 @@
 */
 #include "Adafruit_GFX.h"     // Core graphics library
 #include "Adafruit_ST7789.h"  // Hardware-specific library for ST7789
+#include <WiFi.h>
 #define TFT_CS 3
 #define TFT_RST 21
 #define TFT_DC 2
@@ -30,6 +31,8 @@ short up;
 short down;
 short increment = 2;
 uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST77XX_BLUE, ST77XX_MAGENTA, ST77XX_WHITE, ST77XX_BLACK };  // Array of colors for easy access
+
+int clients;
 
 class Base;
 
@@ -150,6 +153,14 @@ class Base {
 Base base = Base(true);
 
 void setup(void) {
+  Serial.begin(115200);
+  const char* ssid = "ESP32AP1";
+  const char* password = "123456789"; 
+  WiFi.softAP(ssid, password, 1, true);
+  Serial.print("Access point started. IP address: ");
+  Serial.println(WiFi.softAPIP());
+  clients = WiFi.softAPgetStationNum(); 
+   
   pinMode(buttonIn, INPUT_PULLUP);
   pinMode(outputA, INPUT);
   pinMode(outputB, INPUT);
@@ -162,6 +173,12 @@ void setup(void) {
   currentMenu->printMenu();
 }
 void loop() {
+  if (clients != WiFi.softAPgetStationNum()) {
+    Serial.println("New Client");
+  // Check the number of connected clients
+  Serial.print("Number of connected clients: ");
+  Serial.println(WiFi.softAPgetStationNum()); 
+  }
   aState = digitalRead(outputA);
   button = digitalRead(buttonIn);
   if (aState != aLastState) {
