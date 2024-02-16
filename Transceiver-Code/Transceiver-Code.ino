@@ -10,18 +10,18 @@
 */
 #include "Adafruit_GFX.h"     // Core graphics library
 #include "Adafruit_ST7789.h"  // Hardware-specific library for ST7789
-#define TFT_CS A3
-#define TFT_RST A5
-#define TFT_DC A4
+#define TFT_CS 3
+#define TFT_RST 21
+#define TFT_DC 2
+#define TFT_SDA 10
+#define TFT_SCL 7
 
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RST);
 
 // Rotary encoder defs
-#define VCC 3
-#define GND 2
-#define outputA 6
-#define outputB 5
-#define buttonIn 4
+#define outputA 9
+#define outputB 8
+#define buttonIn 20
 short aState;
 short aLastState;
 bool button;
@@ -150,10 +150,6 @@ class Base {
 Base base = Base(true);
 
 void setup(void) {
-  pinMode(VCC, OUTPUT);
-  pinMode(GND, OUTPUT);
-  digitalWrite(VCC, HIGH);
-  digitalWrite(GND, LOW);
   pinMode(buttonIn, INPUT_PULLUP);
   pinMode(outputA, INPUT);
   pinMode(outputB, INPUT);
