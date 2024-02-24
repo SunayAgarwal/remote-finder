@@ -1,43 +1,63 @@
-// Upload as Adafruit QT Py ESP32-C3
 #include <WiFi.h>
 
-const char *ssid = "network_name";
-const char *password = "network_password";
-#define BUZZER 4 // Buzzer on pin D2
+#define BUZZER 3
+
+const char* ssid = "ESP32AP1";
+const char* password = "123456789";
+const char* serverIP = "192.168.4.1"; // IP address of the server
+
+bool buzzerState = LOW;
 
 void setup() {
   Serial.begin(115200);
-
-  // Connect to Wi-Fi
+  pinMode(BUZZER, OUTPUT);
+  // Connect to WiFi
   WiFi.begin(ssid, password);
+  Serial.println("Connecting to WiFi...");
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.println("Connecting to WiFi...");
+    Serial.println(".");
   }
-  Serial.println("Connected to WiFi");
 
-  pinMode(BUZZER, OUTPUT);
-  digitalWrite(BUZZER, HIGH);
+  Serial.println("Connected to WiFi");
+  Serial.println("MAC Address: " + WiFi.macAddress());
+
+  // Send MAC address to server
+  sendMACAddress();
 }
 
 void loop() {
-  // Check if a message is available
-  if (Serial.available() > 0) {
-    // Read the message
-    char incomingChar = Serial.read();
-
-    // Check if the message is "1"
-    if (incomingChar == '1') {
-      // Turn on the onboard LED
-      digitalWrite(BUZZER, HIGH);
-      Serial.println("LED turned on");
-      delay(1000);
-      digitalWrite(BUZZER, LOW);
-    } else {
-      // Turn off the onboard LED for any other message
-      digitalWrite(BUZZER, LOW);
-      Serial.println("LED turned off");
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.disconnect();
+    WiFi.reconnect();
+    delay(100);
+  }
+  while (client.connected()) {
+      if (client.available()) {
+        String request = client.readStringUntil('\r');
+        if (request == WiFi.macAddress() && buzzerState == LOW) {
+          buzzerState = HIGH;
+          digitalWrite(BUZZER, buzzerState);
+          Serial.println(buzzerState);
+        }
+        if (request == WiFi.macAddress() && buzzerState == HIGH) {
+          buzzerState = LOW;
+          digitalWrite(BUZZER, buzzerState);
+          Serial.println(buzzerState);
+        }
     }
+  }
+}
+
+void sendMACAddress() {
+  WiFiClient client;
+
+  if (client.connect(serverIP, 80)) {
+    Serial.println("Connected to server");
+    client.println(WiFi.macAddress());
+    Serial.println("MAC address sent to server");
+  } else {
+    Serial.println("Connection to server failed");
   }
 }
