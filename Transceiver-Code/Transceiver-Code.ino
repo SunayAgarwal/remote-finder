@@ -222,7 +222,7 @@ void loop() {
       }
     }
   }
-  if (button == false && buttonLastState == true) {
+  if (button == true && buttonLastState == false) {
     tone(SPEAKER, 1000, 100); // Play a 1000 Hz tone for 100 milliseconds
     currentMenu->selectOption();
   }
