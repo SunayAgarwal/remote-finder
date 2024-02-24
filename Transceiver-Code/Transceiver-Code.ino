@@ -1,21 +1,23 @@
 /*
-   Arduino --- TFT
-   A3  ---  CS
-   A4  ---  DC
-   A5  ---  RST
-   11  ---  SDA
-   13  ---  SCL
-   3V  ---  VCC
+   Seeeduino Xiao ESP32C3--- TFT
+   D1  ---  CS
+   D0 ---  DC
+   D3  ---  RST
+   D4  ---  SDA
+   D5  ---  SCL
+   3V3  ---  VCC
    GND ---  GND
 */
 #include "Adafruit_GFX.h"     // Core graphics library
 #include "Adafruit_ST7789.h"  // Hardware-specific library for ST7789
 #include <WiFi.h>
+#include <ToneESP32.h>
 #define TFT_CS 3
-#define TFT_RST 21
+#define TFT_RST 5
 #define TFT_DC 2
-#define TFT_SDA 10
+#define TFT_SDA 6
 #define TFT_SCL 7
+#define SPEAKER 21
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RST);
 
@@ -33,7 +35,7 @@ short increment = 2;
 uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST77XX_BLUE, ST77XX_MAGENTA, ST77XX_WHITE, ST77XX_BLACK };  // Array of colors for easy access
 
 int clients;
-
+WiFiServer server(80);
 class Base;
 
 Base* currentMenu;
@@ -152,7 +154,8 @@ class Base {
 
 Base base = Base(true);
 
-void setup(void) {
+void setup() {
+  delay(2500);
   Serial.begin(115200);
   const char* ssid = "ESP32AP1";
   const char* password = "123456789"; 
@@ -161,24 +164,43 @@ void setup(void) {
   Serial.println(WiFi.softAPIP());
   clients = WiFi.softAPgetStationNum(); 
    
+  server.begin();
+   
+  pinMode(SPEAKER, OUTPUT);
+  
   pinMode(buttonIn, INPUT_PULLUP);
   pinMode(outputA, INPUT);
   pinMode(outputB, INPUT);
   aLastState = digitalRead(outputA);
 
   tft.init(240, 320);
+  delay(100);
   tft.setTextWrap(true);
+  delay(100);
   tft.setRotation(3);
+  delay(100);
   tft.fillScreen(ST77XX_BLACK);
+  delay(100);
   currentMenu->printMenu();
+  delay(100);
 }
 void loop() {
-  if (clients != WiFi.softAPgetStationNum()) {
-    Serial.println("New Client");
-  // Check the number of connected clients
-  Serial.print("Number of connected clients: ");
-  Serial.println(WiFi.softAPgetStationNum()); 
-  }
+  
+  WiFiClient client = server.available();
+  if (client) {
+    Serial.println("New client connected");
+    while (client.connected()) {
+      if (client.available()) {
+        String request = client.readStringUntil('\r');
+        Serial.print("Received data: ");
+        Serial.println(request);
+
+      }
+    }
+    Serial.print("Number of connected clients: ");
+    Serial.println(WiFi.softAPgetStationNum());
+  }  
+  
   aState = digitalRead(outputA);
   button = digitalRead(buttonIn);
   if (aState != aLastState) {
@@ -201,6 +223,7 @@ void loop() {
     }
   }
   if (button == false && buttonLastState == true) {
+    tone(SPEAKER, 1000, 100); // Play a 1000 Hz tone for 100 milliseconds
     currentMenu->selectOption();
   }
   aLastState = aState;
