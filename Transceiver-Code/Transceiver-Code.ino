@@ -8,16 +8,16 @@
    3V3  ---  VCC
    GND ---  GND
 */
-#include "Adafruit_GFX.h"     // Core graphics library
-#include "Adafruit_ST7789.h"  // Hardware-specific library for ST7789
-#include <WiFi.h>
-#include <ToneESP32.h>
+#include <Adafruit_GFX.h>     // Core graphics library
+#include <Adafruit_ST7789.h>  // Hardware-specific library for ST7789
+#include <WiFi.h>             // WiFi library for receiver interaction
+#include <ToneESP32.h>        // Tone library for speaker use
 #define TFT_CS 3
 #define TFT_RST 5
 #define TFT_DC 2
 #define TFT_SDA 6
 #define TFT_SCL 7
-#define SPEAKER 21
+#define SPK 21
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RST);
 
@@ -39,12 +39,14 @@ WiFiServer server(80);
 class Base;
 
 Base* currentMenu;
-Base* settings;
-Base* devices;
-Base* mainMenu;
-Base* credits;
 
 class Base {
+  private:
+    Base* settings;
+    Base* devices;
+    Base* mainMenu;
+    Base* credits;
+
   public:
     short cursorIndex = 0;
     short cursorMax = 3;
@@ -166,7 +168,7 @@ void setup() {
    
   server.begin();
    
-  pinMode(SPEAKER, OUTPUT);
+  pinMode(SPK, OUTPUT);
   
   pinMode(buttonIn, INPUT_PULLUP);
   pinMode(outputA, INPUT);
@@ -223,7 +225,7 @@ void loop() {
     }
   }
   if (button == true && buttonLastState == false) {
-    tone(SPEAKER, 1000, 100); // Play a 1000 Hz tone for 100 milliseconds
+    tone(SPK, 1000, 100); // Play a 1000 Hz tone for 100 milliseconds
     currentMenu->selectOption();
   }
   aLastState = aState;
