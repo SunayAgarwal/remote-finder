@@ -34,9 +34,35 @@ short down;
 short increment = 2;
 uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST77XX_BLUE, ST77XX_MAGENTA, ST77XX_WHITE, ST77XX_BLACK };  // Array of colors for easy access
 
-int clients;
+short clients;
+short prevClients;
 WiFiServer server(80);
 class Base;
+
+class Device {
+  private:
+    String address;
+
+  public:
+    bool connected = false;
+
+    void buzz(WiFiClient client) {
+      client.println(address);
+    }
+
+    String getMAC() {
+      return address;
+    }
+
+    void addAddress(String adr) {
+      address = adr;
+    }
+
+    Device() {}
+};
+
+Device* dev1;
+Device* dev2;
 
 Base* currentMenu;
 
@@ -186,6 +212,8 @@ void setup() {
   currentMenu->printMenu();
   delay(100);
 }
+
+
 void loop() {
   
   WiFiClient client = server.available();
@@ -195,12 +223,17 @@ void loop() {
       if (client.available()) {
         String request = client.readStringUntil('\r');
         Serial.print("Received data: ");
-        Serial.println(request);
+        Serial.println(client.readStringUntil('\r'));
 
       }
     }
     Serial.print("Number of connected clients: ");
     Serial.println(WiFi.softAPgetStationNum());
+  }
+
+  if (clients < prevClients) {
+    client.println("return address pls");
+    String address = client.readStringUntil('\r');
   }  
   
   aState = digitalRead(outputA);
@@ -230,4 +263,5 @@ void loop() {
   }
   aLastState = aState;
   buttonLastState = button;
+  prevClients = clients;
 }
