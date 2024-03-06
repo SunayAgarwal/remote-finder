@@ -37,16 +37,16 @@ uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST
 short clients;
 short prevClients;
 WiFiServer server(80);
-class Base;
+class Menu;
 
 class Device {
-  private:
-    String address;
-
   public:
+    String address;
     bool connected = false;
+    Menu* menu;
+    WiFiClient client;
 
-    void buzz(WiFiClient client) {
+    void buzz() {
       client.println(address);
     }
 
@@ -61,17 +61,16 @@ class Device {
     Device() {}
 };
 
-Device* dev1;
-Device* dev2;
+Device dev1;
+Device dev2;
 
-Base* currentMenu;
+Menu* currentMenu;
+Menu* settings;
+Menu* devices;
+Menu* mainMenu;
+Menu* credits;
 
-class Base {
-  private:
-    Base* settings;
-    Base* devices;
-    Base* mainMenu;
-    Base* credits;
+class Menu {
 
   public:
     short cursorIndex = 0;
@@ -109,6 +108,7 @@ class Base {
     }
 
     void cursorDown() {
+      tone(SPK, 5000, 5);
       unHighlightOption();
       ++cursorIndex;
       if (cursorIndex > cursorMax) {
@@ -118,6 +118,7 @@ class Base {
     }
 
     void cursorUp() {
+      tone(SPK, 5000, 5);
       unHighlightOption();
       --cursorIndex;
       if (cursorIndex < 0) {
@@ -127,6 +128,7 @@ class Base {
     }
 
     void selectOption() {
+      tone(SPK, 2500, 40);
       unHighlightOption();
       highlightOption();
       // this is the best way to do this because idk
@@ -137,6 +139,8 @@ class Base {
       } else if (menuItems[cursorIndex] == "<< Back") {
         if (title == "Devices" || title == "Settings" || title == "Credits") {
           mainMenu->printMenu();
+        } else if (title == "Device One" || title == "Device Two") {
+          devices->printMenu();
         }
       } else if (menuItems[cursorIndex] == "Light Mode" || menuItems[cursorIndex] == "Dark Mode") {
         if (menuItems[cursorIndex] == "Light Mode") { 
@@ -151,10 +155,20 @@ class Base {
         printMenu();
       } else if (menuItems[cursorIndex] == "Credits") {
         credits->printMenu();
+      } else if (menuItems[cursorIndex] == "Device One") {
+        dev1.menu->printMenu();
+      } else if (menuItems[cursorIndex] == "Device Two") {
+        dev2.menu->printMenu();
+      } else if (menuItems[cursorIndex] == "Play Sound") {
+        if (title == "Device One") {
+          dev1.buzz();
+        } else if (title == "Device Two") {
+          dev2.buzz();
+        }
       }
     }
 
-    Base(String tt, String option1, String option2, String option3, String option4) {
+    Menu(String tt, String option1, String option2, String option3, String option4) {
       title = tt;
       menuItems[0] = option1;
       menuItems[1] = option2;
@@ -162,7 +176,7 @@ class Base {
       menuItems[3] = option4;
     }
 
-    Base(String tt, String option1, String option2, String option3, String option4, int max) {
+    Menu(String tt, String option1, String option2, String option3, String option4, int max) {
       title = tt;
       menuItems[0] = option1;
       menuItems[1] = option2;
@@ -171,16 +185,18 @@ class Base {
       cursorMax = max;
     }
 
-    Base(bool idk) {
-      devices = new Base("Devices", "<< Back", "one", "two", "three");
-      settings = new Base("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker Toggle");
-      mainMenu = new Base("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
-      credits = new Base("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
+    Menu(bool idk) {
+      devices = new Menu("Devices", "<< Back", "Device One", "Device Two", "", 2);
+      settings = new Menu("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker Toggle");
+      mainMenu = new Menu("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
+      credits = new Menu("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
       currentMenu = mainMenu;
+      dev1.menu = new Menu("Device One", "<< Back", "Play Sound", "", "", 1);
+      dev2.menu = new Menu("Device Two", "<< Back", "Play Sound", "", "", 1);
     }
 };
 
-Base base = Base(true);
+Menu base = Menu(true);
 
 void setup() {
   delay(2500);
@@ -258,7 +274,6 @@ void loop() {
     }
   }
   if (button == true && buttonLastState == false) {
-    tone(SPK, 1000, 100); // Play a 1000 Hz tone for 100 milliseconds
     currentMenu->selectOption();
   }
   aLastState = aState;
