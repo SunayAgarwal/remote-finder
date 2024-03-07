@@ -39,12 +39,13 @@ short prevClients;
 WiFiServer server(80);
 class Menu;
 
+WiFiClient client;
+
 class Device {
   public:
     String address;
     bool connected = false;
     Menu* menu;
-    WiFiClient client;
 
     void buzz() {
       client.println(address);
@@ -63,7 +64,6 @@ class Device {
 
 Device dev1;
 Device dev2;
-
 Menu* currentMenu;
 Menu* settings;
 Menu* devices;
@@ -212,11 +212,14 @@ class Menu {
 Menu base = Menu(true);
 
 void setup() {
+  delay(1000);
   Serial.begin(115200);
   const char* ssid = "ESP32AP1";
   const char* password = "123456789"; 
+  delay(1000);
   WiFi.softAP(ssid, password, 1, true);
   Serial.print("Access point started. IP address: ");
+  delay(1000);
   Serial.println(WiFi.softAPIP());
   clients = WiFi.softAPgetStationNum(); 
    
@@ -230,15 +233,15 @@ void setup() {
   aLastState = digitalRead(outputA);
 
   tft.init(240, 320);
-  delay(500);
+  delay(1000);
   tft.setTextWrap(true);
-  delay(100);
+  delay(1000);
   tft.setRotation(3);
-  delay(100);
+  delay(1000);
   tft.fillScreen(ST77XX_BLACK);
-  delay(100);
+  delay(1000);
   currentMenu->printMenu();
-  delay(100);
+  delay(1000);
 }
 
 
