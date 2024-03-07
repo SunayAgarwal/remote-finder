@@ -75,8 +75,10 @@ class Menu {
   public:
     short cursorIndex = 0;
     short cursorMax = 3;
+    bool speaker = true;
     String title;
     String menuItems[4];
+
 
     void highlightOption() {
       tft.setTextSize(3);
@@ -108,7 +110,7 @@ class Menu {
     }
 
     void cursorDown() {
-      tone(SPK, 5000, 5);
+      tone(SPK, 5000 * speaker, 5);
       unHighlightOption();
       ++cursorIndex;
       if (cursorIndex > cursorMax) {
@@ -118,7 +120,7 @@ class Menu {
     }
 
     void cursorUp() {
-      tone(SPK, 5000, 5);
+      tone(SPK, 5000 * speaker, 5);
       unHighlightOption();
       --cursorIndex;
       if (cursorIndex < 0) {
@@ -128,7 +130,7 @@ class Menu {
     }
 
     void selectOption() {
-      tone(SPK, 2500, 40);
+      tone(SPK, 2500 * speaker, 40);
       unHighlightOption();
       highlightOption();
       // this is the best way to do this because idk
@@ -165,6 +167,17 @@ class Menu {
         } else if (title == "Device Two") {
           dev2.buzz();
         }
+      } else if (menuItems[cursorIndex] == "Speaker: On" || menuItems[cursorIndex] == "Speaker: Off") {
+        if (speaker) {
+          speaker = false;
+          menuItems[3] = "Speaker: Off";
+        } else if (!speaker) {
+          speaker = true;
+          menuItems[3] = "Speaker: On ";
+          unHighlightOption();
+          menuItems[3] = "Speaker: On";
+        }
+        highlightOption();
       }
     }
 
@@ -187,7 +200,7 @@ class Menu {
 
     Menu(bool idk) {
       devices = new Menu("Devices", "<< Back", "Device One", "Device Two", "", 2);
-      settings = new Menu("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker Toggle");
+      settings = new Menu("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker: On");
       mainMenu = new Menu("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
       credits = new Menu("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
       currentMenu = mainMenu;
@@ -199,7 +212,6 @@ class Menu {
 Menu base = Menu(true);
 
 void setup() {
-  delay(2500);
   Serial.begin(115200);
   const char* ssid = "ESP32AP1";
   const char* password = "123456789"; 
@@ -218,7 +230,7 @@ void setup() {
   aLastState = digitalRead(outputA);
 
   tft.init(240, 320);
-  delay(100);
+  delay(500);
   tft.setTextWrap(true);
   delay(100);
   tft.setRotation(3);
@@ -239,7 +251,8 @@ void loop() {
       if (client.available()) {
         String request = client.readStringUntil('\r');
         Serial.print("Received data: ");
-        Serial.println(client.readStringUntil('\r'));
+        Serial.println(request);
+        dev1.addAddress(request);
 
       }
     }
