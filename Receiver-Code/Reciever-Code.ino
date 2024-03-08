@@ -8,16 +8,18 @@ const char* serverIP = "192.168.4.1"; // IP address of the server
 
 bool buzzerState = LOW;
 
+WiFiClient client;
+
 void setup() {
   Serial.begin(115200);
   pinMode(BUZZER, OUTPUT);
   // Connect to WiFi
   WiFi.begin(ssid, password);
-  Serial.println("Connecting to WiFi...");
+  Serial.print("Connecting to WiFi...");
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.println(".");
+    Serial.print(".");
   }
 
   Serial.println("Connected to WiFi");
@@ -33,7 +35,7 @@ void loop() {
     WiFi.reconnect();
     delay(100);
   }
-  while (client.connected()) {
+  
       if (client.available()) {
         String request = client.readStringUntil('\r');
         if (request == WiFi.macAddress() && buzzerState == LOW) {
@@ -47,12 +49,9 @@ void loop() {
           Serial.println(buzzerState);
         }
     }
-  }
 }
 
 void sendMACAddress() {
-  WiFiClient client;
-
   if (client.connect(serverIP, 80)) {
     Serial.println("Connected to server");
     client.println(WiFi.macAddress());
