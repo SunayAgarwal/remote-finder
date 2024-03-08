@@ -32,6 +32,7 @@ bool buttonLastState;
 short up;
 short down;
 short increment = 2;
+short dumbass = 1;
 uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST77XX_BLUE, ST77XX_MAGENTA, ST77XX_WHITE, ST77XX_BLACK };  // Array of colors for easy access
 
 short clients;
@@ -48,7 +49,9 @@ class Device {
     Menu* menu;
 
     void buzz() {
+      client.connect("192.168.4.2", 80);
       client.println(address);
+    
     }
 
     String getMAC() {
@@ -212,19 +215,19 @@ class Menu {
 Menu base = Menu(true);
 
 void setup() {
-  delay(1000);
+  delay(dumbass);
   Serial.begin(115200);
   const char* ssid = "ESP32AP1";
   const char* password = "123456789"; 
-  delay(1000);
+  delay(dumbass);
   WiFi.softAP(ssid, password, 1, true);
   Serial.print("Access point started. IP address: ");
-  delay(1000);
+  delay(dumbass);
   Serial.println(WiFi.softAPIP());
   clients = WiFi.softAPgetStationNum(); 
-   
+  delay(dumbass);
   server.begin();
-   
+  
   pinMode(SPK, OUTPUT);
   
   pinMode(buttonIn, INPUT_PULLUP);
@@ -235,13 +238,13 @@ void setup() {
   tft.init(240, 320);
   delay(1000);
   tft.setTextWrap(true);
-  delay(1000);
+  delay(dumbass);
   tft.setRotation(3);
-  delay(1000);
+  delay(dumbass);
   tft.fillScreen(ST77XX_BLACK);
-  delay(1000);
+  delay(dumbass);
   currentMenu->printMenu();
-  delay(1000);
+  delay(dumbass);
 }
 
 
@@ -250,7 +253,7 @@ void loop() {
   WiFiClient client = server.available();
   if (client) {
     Serial.println("New client connected");
-    while (client.connected()) {
+    if (client.connected()) {
       if (client.available()) {
         String request = client.readStringUntil('\r');
         Serial.print("Received data: ");
