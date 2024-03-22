@@ -1,5 +1,10 @@
+//upload as ESP32 Wrover Kit (all versions)
+//netmask: 255.255.255.0
+//receive code as HEX type, receive code as uint8_t type
+
+
 /*
-   Seeeduino Xiao ESP32C3--- TFT
+   ESP32--- TFT
    D1  ---  CS
    D0 ---  DC
    D3  ---  RST
@@ -11,20 +16,21 @@
 #include <Adafruit_GFX.h>     // Core graphics library
 #include <Adafruit_ST7789.h>  // Hardware-specific library for ST7789
 #include <WiFi.h>             // WiFi library for receiver interaction
+#include <WiFiUdp.h>
 #include <ToneESP32.h>        // Tone library for speaker use
-#define TFT_CS 3
-#define TFT_RST 5
-#define TFT_DC 2
-#define TFT_SDA 6
-#define TFT_SCL 7
-#define SPK 21
+#define TFT_CS 32
+#define TFT_RST 25
+#define TFT_DC 33
+#define TFT_SDA 21
+#define TFT_SCL 22
+#define SPK 26
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RST);
 
 // Rotary encoder defs
-#define outputA 9
-#define outputB 8
-#define buttonIn 20
+#define outputA 18
+#define outputB 4
+#define buttonIn 27
 short aState;
 short aLastState;
 bool button;
@@ -35,31 +41,38 @@ short increment = 2;
 short dumbass = 1;
 uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST77XX_BLUE, ST77XX_MAGENTA, ST77XX_WHITE, ST77XX_BLACK };  // Array of colors for easy access
 
+WiFiUDP UDP;
+const int UDPport = 1234;
+char packet[255];
+IPAddress broadcast(192,168,4, 255);
+String recievedMessage = "Packet received";
+uint8_t recievedMessageInt = recievedMessage.toInt();
+
 short clients;
 short prevClients;
-WiFiServer server(80);
+
 class Menu;
 
-WiFiClient client;
+
 
 class Device {
   public:
-    String address;
+    uint8_t address;
     bool connected = false;
     Menu* menu;
 
     void buzz() {
-      client.connect("192.168.4.2", 80);
-      client.println(address);
-    
+      UDP.beginPacket(broadcast, UDPport);
+      UDP.write(address);
+      UDP.endPacket();   
     }
 
-    String getMAC() {
+    uint8_t getMAC() {
       return address;
     }
 
-    void addAddress(String adr) {
-      address = adr;
+    void addAddress(String adr) { // WiFi, use this to pass MAC address of corresponding device on the menu
+      address = adr.toInt();
     }
 
     Device() {}
@@ -215,18 +228,16 @@ class Menu {
 Menu base = Menu(true);
 
 void setup() {
-  delay(dumbass);
+
   Serial.begin(115200);
   const char* ssid = "ESP32AP1";
   const char* password = "123456789"; 
-  delay(dumbass);
   WiFi.softAP(ssid, password, 1, true);
   Serial.print("Access point started. IP address: ");
-  delay(dumbass);
   Serial.println(WiFi.softAPIP());
   clients = WiFi.softAPgetStationNum(); 
-  delay(dumbass);
-  server.begin();
+  
+  UDP.begin(UDPport);
   
   pinMode(SPK, OUTPUT);
   
@@ -236,40 +247,34 @@ void setup() {
   aLastState = digitalRead(outputA);
 
   tft.init(240, 320);
-  delay(1000);
+  delay(500);
   tft.setTextWrap(true);
-  delay(dumbass);
   tft.setRotation(3);
-  delay(dumbass);
   tft.fillScreen(ST77XX_BLACK);
-  delay(dumbass);
   currentMenu->printMenu();
-  delay(dumbass);
 }
 
 
 void loop() {
   
-  WiFiClient client = server.available();
-  if (client) {
-    Serial.println("New client connected");
-    if (client.connected()) {
-      if (client.available()) {
-        String request = client.readStringUntil('\r');
-        Serial.print("Received data: ");
-        Serial.println(request);
-        dev1.addAddress(request);
-
-      }
+  int packetSize = UDP.parsePacket();
+  if (packetSize) {
+    Serial.print("Received packet! Size: ");
+    Serial.println(packetSize); 
+    int len = UDP.read(packet, packetSize);
+    if (len > 0) {
+      packet[len] = '\0';
     }
+    packet[] = char* packet2[];
+    Serial.print("Packet received: ");
+    Serial.println(packet2);                 //packet is new MAC address
+    dev1.addAddress(packet2);
+    UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+    UDP.write(recievedMessageInt);
+    UDP.endPacket();
     Serial.print("Number of connected clients: ");
     Serial.println(WiFi.softAPgetStationNum());
   }
-
-  if (clients < prevClients) {
-    client.println("return address pls");
-    String address = client.readStringUntil('\r');
-  }  
   
   aState = digitalRead(outputA);
   button = digitalRead(buttonIn);
