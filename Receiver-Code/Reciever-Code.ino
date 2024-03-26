@@ -1,14 +1,42 @@
+//reconnecting
+
 #include <WiFi.h>
+#include <WiFiUdp.h>
 
 #define BUZZER 3
 
 const char* ssid = "ESP32AP1";
 const char* password = "123456789";
-const char* serverIP = "192.168.4.1"; // IP address of the server
+const int UDPport = 1234;
 
 bool buzzerState = LOW;
 
-WiFiClient client;
+WiFiUDP UDP;
+uint8_t receivedMessage[] = {0x50, 0x61, 0x63, 0x6B, 0x65, 0x74, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64};
+IPAddress host(192,168,4, 1);
+
+/*
+String charString() {
+uint8_t mac[6];
+WiFi.macAddress(mac);
+String macAddress = "";
+for (int i = 0; i < 6; i++) {
+  macAddress += String(mac[i], HEX);
+  if (i < 5) {
+    macAddress += ":";
+  }
+}
+return macAddress;
+}
+*/
+
+uint8_t macAddressInt = WiFi.macAddress().toInt();
+
+
+String convertToString(char* packet){
+String packetString(packet);
+return packetString;
+}
 
 void setup() {
   Serial.begin(115200);
@@ -24,39 +52,106 @@ void setup() {
 
   Serial.println("Connected to WiFi");
   Serial.println("MAC Address: " + WiFi.macAddress());
-
+  UDP.begin(UDPport);
   // Send MAC address to server
   sendMACAddress();
+
+  uint8_t packet[255];
+  unsigned long previousMillis = millis();
+  int packetSize = UDP.parsePacket();
+  while (packetSize == 0) {
+    packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
+    if (millis() - previousMillis > 10000) {
+      sendMACAddress();
+    }
+  }
+  if (packetSize){
+    Serial.print("Received packet! Size: ");
+    Serial.println(packetSize);
+    int len = UDP.read(packet, 255);
+    for(int b=0; b<14; ++b) {
+      Serial.print((char)packet[b]);      
+    }
+
+    Serial.println();
+    String receivedMessage = "Packetreceived";
+    char receivedMessageChar[14];
+    receivedMessage.toCharArray(receivedMessageChar,15);
+    for(int b=0; b<14; ++b) {
+      Serial.print(receivedMessageChar[b]);      
+    }
+    if (memcmp(packet, receivedMessageChar, 14) != 0) {      //send again, use millis i.e. 500 millis since sent
+      Serial.println("Stuck");
+      while (true){
+        delay(10000);
+      }
+    }
+  }
 }
 
 void loop() {
+  uint8_t packet[255];
   if (WiFi.status() != WL_CONNECTED) {
     WiFi.disconnect();
     WiFi.reconnect();
+    UDP.begin(UDPport);
+    sendMACAddress();
     delay(100);
   }
   
-      if (client.available()) {
-        String request = client.readStringUntil('\r');
-        if (request == WiFi.macAddress() && buzzerState == LOW) {
-          buzzerState = HIGH;
-          digitalWrite(BUZZER, buzzerState);
-          Serial.println(buzzerState);
-        }
-        if (request == WiFi.macAddress() && buzzerState == HIGH) {
-          buzzerState = LOW;
-          digitalWrite(BUZZER, buzzerState);
-          Serial.println(buzzerState);
-        }
+  int packetSize = UDP.parsePacket();
+  if (packetSize) {
+    Serial.print("Received packet! Size: ");
+    Serial.println(packetSize); 
+
+    Serial.print("Packet received: ");
+    for(int b=0; b<6; ++b) {
+      Serial.print(packet[b], HEX);
+      // Add ":" as needed
+      if (b<5) Serial.print(":");
     }
+    Serial.println();
+    uint8_t macAddress[6];
+    WiFi.macAddress(macAddress);
+    if (memcmp(packet, macAddress, 6) == 0 && buzzerState == LOW) {
+      buzzerState = HIGH;
+      Serial.println(buzzerState);
+      UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+      UDP.write(receivedMessage, 14);
+      UDP.endPacket();
+    }
+    else if (memcmp(packet, macAddress, 6) == 0) {
+      buzzerState = LOW;
+      Serial.println(buzzerState);
+      UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+      UDP.write(receivedMessage, 14);
+      UDP.endPacket();
+    }
+  }
+    digitalWrite(BUZZER, buzzerState);
 }
 
 void sendMACAddress() {
-  if (client.connect(serverIP, 80)) {
-    Serial.println("Connected to server");
-    client.println(WiFi.macAddress());
-    Serial.println("MAC address sent to server");
-  } else {
-    Serial.println("Connection to server failed");
+    /*
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    String macAddress = "";
+    for (int i = 0; i < 6; i++) {
+      macAddress += String(mac[i], HEX);
+      if (i < 5) {
+        macAddress += ":";
   }
+    }
+    */
+    uint8_t macAddress[6];
+    WiFi.macAddress(macAddress);
+    for(int b=0; b<6; ++b) {
+      Serial.print(macAddress[b], HEX);
+      // Add ":" as needed
+      if (b<5) Serial.print(":");
+    }
+    Serial.println();
+    UDP.beginPacket(host, UDPport);
+    UDP.write(macAddress, 6);
+    UDP.endPacket();
 }
