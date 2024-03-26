@@ -103,7 +103,7 @@ void loop() {
   if (packetSize) {
     Serial.print("Received packet! Size: ");
     Serial.println(packetSize); 
-
+    int len = UDP.read(packet, 255);
     Serial.print("Packet received: ");
     for(int b=0; b<6; ++b) {
       Serial.print(packet[b], HEX);
