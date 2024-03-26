@@ -57,13 +57,20 @@ class Menu;
 
 class Device {
   public:
-    uint8_t address;
+    uint8_t address[6];
     bool connected = false;
     Menu* menu;
 
     void buzz() {
+      Serial.print("Sending: ");
+      for(int b=0; b<6; ++b) {
+      Serial.print(address[b], HEX);
+      // Add ":" as needed
+      if (b<5) Serial.print(":");
+    }
+    Serial.println();
       UDP.beginPacket(broadcast, UDPport);
-      UDP.write(address);
+      UDP.write(address, 6);
       UDP.endPacket();
       unsigned long previousMillis = millis();
       int packetSize = UDP.parsePacket();
@@ -71,7 +78,7 @@ class Device {
     packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
     if ((millis() - previousMillis) > 10000) {
       UDP.beginPacket(broadcast, UDPport);
-      UDP.write(address);
+      UDP.write(address, 6);
       UDP.endPacket();
       previousMillis = millis();
     }
@@ -94,11 +101,11 @@ class Device {
     }
     }
     uint8_t getMAC() {
-      return address;
+      return *address;
     }
 
     void addAddress(String adr) { // WiFi, use this to pass MAC address of corresponding device on the menu
-      address = adr.toInt();
+      *address = adr.toInt();
     }
 
     Device() {}
