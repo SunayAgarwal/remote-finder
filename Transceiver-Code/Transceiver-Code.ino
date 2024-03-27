@@ -18,6 +18,8 @@
 #include <WiFi.h>             // WiFi library for receiver interaction
 #include <WiFiUdp.h>
 #include <ToneESP32.h>        // Tone library for speaker use
+#include "esp_system.h"
+#include "esp32/rom/rtc.h"
 #define TFT_CS 32
 #define TFT_RST 25
 #define TFT_DC 33
@@ -81,6 +83,7 @@ class Device {
       UDP.write(address, 6);
       UDP.endPacket();
       previousMillis = millis();
+      
     }
   }
   if (packetSize){
@@ -260,7 +263,20 @@ class Menu {
 
 Menu base = Menu(true);
 
+void disable_watchdog_timers() {
+    // Disable software watchdog timer
+    CLEAR_PERI_REG_MASK(RTC_CNTL_OPTIONS0_REG, RTC_CNTL_WDT_EN); // Clear the watchdog enable bit
+}
+
+void disable_brownout_detector() {
+  // Disable brownout detector
+    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
+}
+
 void setup() {
+
+  disable_watchdog_timers();
+  disable_brownout_detector();
 
   Serial.begin(115200);
   const char* ssid = "ESP32AP1";
