@@ -1,7 +1,7 @@
 //upload as ESP32 Wrover Kit (all versions)
 //netmask: 255.255.255.0
-// receiver reconnecting
 //when powercycle (receivers order)
+//edge cases, multiple receivers
 
 /*
    ESP32--- TFT
@@ -57,7 +57,7 @@ class Menu;
 
 class Device {
   public:
-    uint8_t address[6];
+    uint8_t address[255];
     bool connected = false;
     Menu* menu;
 
@@ -103,11 +103,11 @@ class Device {
     uint8_t getMAC() {
       return *address;
     }
-
-    void addAddress(String adr) { // WiFi, use this to pass MAC address of corresponding device on the menu
+/*
+    void addAddress(uint8_t adr) { // WiFi, use this to pass MAC address of corresponding device on the menu
       *address = adr.toInt();
     }
-
+*/
     Device() {}
 };
 
@@ -303,8 +303,9 @@ void loop() {
       if (b<5) Serial.print(":");
     }
     Serial.println();    
-    char* addressPacket = (char*) packet;
-    dev1.addAddress(addressPacket);    //packet is new MAC address
+    //char* addressPacket = (char*) packet;
+    memcpy(dev1.address, packet, 6);
+    //dev1.addAddress(packet);    //packet is new MAC address
     for(int b=0; b<14; ++b) {
       Serial.write(receivedMessage[b]);
     }
