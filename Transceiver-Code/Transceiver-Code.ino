@@ -61,48 +61,46 @@ class Device {
   public:
     uint8_t address[255];
     bool connected = false;
+    bool buzzing = false;
     Menu* menu;
 
     void buzz() {
+      buzzing = true;
       Serial.print("Sending: ");
       for(int b=0; b<6; ++b) {
-      Serial.print(address[b], HEX);
-      // Add ":" as needed
-      if (b<5) Serial.print(":");
-    }
-    Serial.println();
+        Serial.print(address[b], HEX);
+        // Add ":" as needed
+        if (b<5) Serial.print(":");
+      }
+      Serial.println();
       UDP.beginPacket(broadcast, UDPport);
       UDP.write(address, 6);
       UDP.endPacket();
       unsigned long previousMillis = millis();
-      int packetSize = UDP.parsePacket();
-  while (packetSize == 0) {
-    packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
-    if ((millis() - previousMillis) > 10000) {
-      UDP.beginPacket(broadcast, UDPport);
-      UDP.write(address, 6);
-      UDP.endPacket();
-      previousMillis = millis();
-      
-    }
-  }
-  if (packetSize){
-    Serial.print("Received packet! Size: ");
-    Serial.println(packetSize);
-    int len = UDP.read(packet, 255);
-    for(int b=0; b<14; ++b) {
-      Serial.print((char)packet[b]);      
-    }   
-    Serial.println();
-    String receivedMessage = "Packetreceived";
-    char receivedMessageChar[14];
-    receivedMessage.toCharArray(receivedMessageChar,15);
-    for(int b=0; b<14; ++b) {
-      Serial.print(receivedMessageChar[b]);      
+      int packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
+      if ((millis() - previousMillis) > 10000) {
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(address, 6);
+        UDP.endPacket();
+        previousMillis = millis();
+      if (packetSize){
+        Serial.print("Received packet! Size: ");
+        Serial.println(packetSize);
+        int len = UDP.read(packet, 255);
+        for(int b=0; b<14; ++b) {
+          Serial.print((char)packet[b]);      
+        }   
+        Serial.println();
+        String receivedMessage = "Packetreceived";
+        char receivedMessageChar[14];
+        receivedMessage.toCharArray(receivedMessageChar,15);
+        for(int b=0; b<14; ++b) {
+          Serial.print(receivedMessageChar[b]);      
+        }
+        buzzing = false;
+      }
     }
     
-    }
-    }
     uint8_t getMAC() {
       return *address;
     }
@@ -195,6 +193,8 @@ class Menu {
           mainMenu->printMenu();
         } else if (title == "Device One" || title == "Device Two") {
           devices->printMenu();
+          dev1.buzzing = false;
+          dev2.buzzing = false;
         }
       } else if (menuItems[cursorIndex] == "Light Mode" || menuItems[cursorIndex] == "Dark Mode") {
         if (menuItems[cursorIndex] == "Light Mode") { 
@@ -360,4 +360,11 @@ void loop() {
   aLastState = aState;
   buttonLastState = button;
   prevClients = clients;
+
+  if (dev1.buzzing) {
+    dev1.buzz;
+  }
+  if (dev2.buzzing) {
+    dev2.buzz;
+  }
 }
