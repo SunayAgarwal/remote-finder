@@ -1,5 +1,3 @@
-//reconnecting
-
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
@@ -91,11 +89,35 @@ void setup() {
 
 void loop() {
   uint8_t packet[255];
+
   if (WiFi.status() != WL_CONNECTED) {
-    WiFi.disconnect();
-    WiFi.reconnect();
+    WiFi.begin(ssid, password);
     UDP.begin(UDPport);
     sendMACAddress();
+  unsigned long previousMillis = millis();
+  int packetSize = UDP.parsePacket();
+  while (packetSize == 0) {
+    packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
+    if (millis() - previousMillis > 10000) {
+      sendMACAddress();
+    }
+  }
+  if (packetSize){
+    Serial.print("Received packet! Size: ");
+    Serial.println(packetSize);
+    int len = UDP.read(packet, 255);
+    for(int b=0; b<14; ++b) {
+      Serial.print((char)packet[b]);      
+    }
+
+    Serial.println();
+    String receivedMessage = "Packetreceived";
+    char receivedMessageChar[14];
+    receivedMessage.toCharArray(receivedMessageChar,15);
+    for(int b=0; b<14; ++b) {
+      Serial.print(receivedMessageChar[b]);      
+    }
+    }
     delay(100);
   }
   
