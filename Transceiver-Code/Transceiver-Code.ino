@@ -83,6 +83,7 @@ class Device {
         UDP.write(address, 6);
         UDP.endPacket();
         previousMillis = millis();
+      }
       if (packetSize){
         Serial.print("Received packet! Size: ");
         Serial.println(packetSize);
@@ -362,9 +363,9 @@ void loop() {
   prevClients = clients;
 
   if (dev1.buzzing) {
-    dev1.buzz;
+    dev1.buzz();
   }
   if (dev2.buzzing) {
-    dev2.buzz;
+    dev2.buzz();
   }
 }
