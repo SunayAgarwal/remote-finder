@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-#define BUZZER 3
+#define BUZZER 3   //D1
 
 const char* ssid = "ESP32AP1";
 const char* password = "123456789";
@@ -63,6 +63,7 @@ void setup() {
     packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
     if (millis() - previousMillis > 10000) {
       sendMACAddress();
+      previousMillis = millis();
     }
   }
   if (packetSize){
