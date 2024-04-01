@@ -54,6 +54,19 @@ uint8_t receivedMessage[] = {0x50, 0x61, 0x63, 0x6B, 0x65, 0x74, 0x72, 0x65, 0x6
 short clients;
 short prevClients;
 
+String receivedStringMessage = "Packetreceived";
+char receivedMessageChar[14];
+
+void disable_watchdog_timers() {
+    // Disable software watchdog timer
+    CLEAR_PERI_REG_MASK(RTC_CNTL_OPTIONS0_REG, RTC_CNTL_WDT_EN); // Clear the watchdog enable bit
+}
+
+void disable_brownout_detector() {
+  // Disable brownout detector
+    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
+}
+
 class Menu;
 
 
@@ -67,7 +80,9 @@ class Device {
     unsigned long previousMillis;
 
     void startBuzz() {
-      buzzing = true;
+    disable_watchdog_timers();
+    disable_brownout_detector();
+      this->buzzing = true;
       Serial.print("Sending: ");
       for(int b=0; b<6; ++b) {
         Serial.print(address[b], HEX);
@@ -82,28 +97,11 @@ class Device {
     }
     
     void buzz() {
-      int packetSize = UDP.parsePacket();   //if goes through 20 iterations with no response, send again
       if ((millis() - previousMillis) > 10000) {
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(address, 6);
         UDP.endPacket();
         previousMillis = millis();
-      }
-      if (packetSize){
-        Serial.print("Received packet! Size: ");
-        Serial.println(packetSize);
-        int len = UDP.read(packet, 255);
-        for(int b=0; b<14; ++b) {
-          Serial.print((char)packet[b]);      
-        }   
-        Serial.println();
-        String receivedMessage = "Packetreceived";
-        char receivedMessageChar[14];
-        receivedMessage.toCharArray(receivedMessageChar,15);
-        for(int b=0; b<14; ++b) {
-          Serial.print(receivedMessageChar[b]);      
-        }
-        buzzing = false;
       }
     }
     
@@ -269,15 +267,7 @@ class Menu {
 
 Menu base = Menu(true);
 
-void disable_watchdog_timers() {
-    // Disable software watchdog timer
-    CLEAR_PERI_REG_MASK(RTC_CNTL_OPTIONS0_REG, RTC_CNTL_WDT_EN); // Clear the watchdog enable bit
-}
 
-void disable_brownout_detector() {
-  // Disable brownout detector
-    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
-}
 
 void setup() {
 
@@ -301,6 +291,8 @@ void setup() {
   pinMode(outputB, INPUT);
   aLastState = digitalRead(outputA);
 
+  receivedStringMessage.toCharArray(receivedMessageChar,15);
+
   tft.init(240, 320);
   delay(500);
   tft.setTextWrap(true);
@@ -314,32 +306,7 @@ void loop() {
   disable_watchdog_timers();
   disable_brownout_detector();
 
-  int packetSize = UDP.parsePacket();
-  if (packetSize) {
-    Serial.print("Received packet! Size: ");
-    Serial.println(packetSize); 
-    int len = UDP.read(packet, packetSize);
-    Serial.print("Packet received: ");
-    
-    for(int b=0; b<6; ++b) {
-      Serial.print(packet[b], HEX);
-      // Add ":" as needed
-      if (b<5) Serial.print(":");
-    }
-    Serial.println();    
-    //char* addressPacket = (char*) packet;
-    memcpy(dev1.address, packet, 6);
-    //dev1.addAddress(packet);    //packet is new MAC address
-    for(int b=0; b<14; ++b) {
-      Serial.write(receivedMessage[b]);
-    }
-    Serial.println();
-    UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
-    UDP.write(receivedMessage, 14);
-    UDP.endPacket();
-    Serial.print("Number of connected clients: ");
-    Serial.println(WiFi.softAPgetStationNum());
-  }
+  checkWiFi();
   
   aState = digitalRead(outputA);
   button = digitalRead(buttonIn);
@@ -374,6 +341,41 @@ void loop() {
   }
   if (dev2.buzzing) {
     dev2.buzz();
+  }
+}
+
+void checkWiFi() {
+  int packetSize = UDP.parsePacket();
+  if (packetSize) {
+    int len = UDP.read(packet, packetSize);
+    if (memcmp(receivedMessageChar, packet, 14) == 0) {
+      dev1.buzzing = false;
+      dev2.buzzing = false;
+      delay(500);
+      return;
+    }
+    Serial.print("Received packet! Size: ");
+    Serial.println(packetSize); 
+    Serial.print("Packet received: ");
+    
+    for(int b=0; b<6; ++b) {
+      Serial.print(packet[b], HEX);
+      // Add ":" as needed
+      if (b<5) Serial.print(":");
+    }
+    Serial.println();    
+    //char* addressPacket = (char*) packet;
+    memcpy(dev1.address, packet, 6);
+    //dev1.addAddress(packet);    //packet is new MAC address
+    for(int b=0; b<14; ++b) {
+      Serial.write(receivedMessage[b]);
+    }
+    Serial.println();
+    UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+    UDP.write(receivedMessage, 14);
+    UDP.endPacket();
+    Serial.print("Number of connected clients: ");
+    Serial.println(WiFi.softAPgetStationNum());
   }
 }
 
