@@ -78,16 +78,17 @@ class Device {
       UDP.beginPacket(broadcast, UDPport);
       UDP.write(address, 6);
       UDP.endPacket();
+      previousMillis = millis();
     }
     
     void buzz() {
-      int packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
+      int packetSize = UDP.parsePacket();   //if goes through 20 iterations with no response, send again
       if ((millis() - previousMillis) > 10000) {
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(address, 6);
         UDP.endPacket();
+        previousMillis = millis();
       }
-      previousMillis = millis();
       if (packetSize){
         Serial.print("Received packet! Size: ");
         Serial.println(packetSize);
@@ -375,3 +376,8 @@ void loop() {
     dev2.buzz();
   }
 }
+
+/**
+ * Bug list
+ * 
+ */
