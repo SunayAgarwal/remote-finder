@@ -2,6 +2,7 @@
 //netmask: 255.255.255.0
 //when powercycle (receivers order)
 //edge cases, multiple receivers
+//roll call
 
 /*
    ESP32--- TFT
@@ -63,8 +64,9 @@ class Device {
     bool connected = false;
     bool buzzing = false;
     Menu* menu;
+    unsigned long previousMillis;
 
-    void buzz() {
+    void startBuzz() {
       buzzing = true;
       Serial.print("Sending: ");
       for(int b=0; b<6; ++b) {
@@ -76,14 +78,16 @@ class Device {
       UDP.beginPacket(broadcast, UDPport);
       UDP.write(address, 6);
       UDP.endPacket();
-      unsigned long previousMillis = millis();
+    }
+    
+    void buzz() {
       int packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
       if ((millis() - previousMillis) > 10000) {
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(address, 6);
         UDP.endPacket();
-        previousMillis = millis();
       }
+      previousMillis = millis();
       if (packetSize){
         Serial.print("Received packet! Size: ");
         Serial.println(packetSize);
@@ -216,9 +220,9 @@ class Menu {
         dev2.menu->printMenu();
       } else if (menuItems[cursorIndex] == "Play Sound") {
         if (title == "Device One") {
-          dev1.buzz();
+          dev1.startBuzz();
         } else if (title == "Device Two") {
-          dev2.buzz();
+          dev2.startBuzz();
         }
       } else if (menuItems[cursorIndex] == "Speaker: On" || menuItems[cursorIndex] == "Speaker: Off") {
         if (speaker) {
@@ -306,7 +310,9 @@ void setup() {
 
 
 void loop() {
-  
+  disable_watchdog_timers();
+  disable_brownout_detector();
+
   int packetSize = UDP.parsePacket();
   if (packetSize) {
     Serial.print("Received packet! Size: ");
