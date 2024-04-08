@@ -256,7 +256,7 @@ class Menu {
 
     Menu(bool idk) {
       devices = new Menu("Devices", "<< Back", "Device One", "Device Two", "", 2);
-      settings = new Menu("Settings", "<< Back", "Add a Device", "Light Mode", "Speaker: On");
+      settings = new Menu("Settings", "<< Back", "Light Mode", "Speaker: On", "", 2);
       mainMenu = new Menu("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
       credits = new Menu("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
       currentMenu = mainMenu;
