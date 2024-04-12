@@ -36,8 +36,9 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RST)
 #define buttonIn 26
 short aState;
 short aLastState;
-bool button = false;
-bool buttonLastState = false;
+unsigned long cancelMillis;
+bool button;
+bool buttonLastState = true;
 short up;
 short down;
 short increment = 2;
@@ -127,6 +128,7 @@ Menu* credits;
 class Menu {
 
   public:
+    bool active = false;
     short cursorIndex = 0;
     short cursorMax = 3;
     bool speaker = true;
@@ -149,7 +151,9 @@ class Menu {
     }
 
     void printMenu() {
+      currentMenu->active = false;
       currentMenu = this;
+      active = true;
       tft.fillScreen(color[7]);
       tft.setTextSize(3);
       tft.setTextColor(color[6]);
@@ -161,6 +165,18 @@ class Menu {
         tft.print(menuItems[i]);
       }
       highlightOption();
+    }
+
+    void cancelCancel() {
+      if (menuItems[2] != "Cancel") {return;}
+      menuItems[2] = "      ";
+      if (cursorIndex == 2) {
+        cursorUp();
+      }
+      tft.setTextSize(3);
+      tft.setTextColor(color[6], color[7]);
+      tft.setCursor(5, 120);
+      tft.print("      ");
     }
 
     void cursorDown() {
@@ -232,8 +248,8 @@ class Menu {
         }
         menuItems[2] = "Cancel";
         cursorMax = 2;
-        cursorDown();
-        cursorUp();
+        tft.setCursor(5, 85);
+        tft.print("Cancel");
       } else if (menuItems[cursorIndex] == "Speaker: On" || menuItems[cursorIndex] == "Speaker: Off") {
         if (speaker) {
           speaker = false;
@@ -381,6 +397,10 @@ void loop() {
   } else if (dev3.buzzing) {
     dev3.buzz();
   }
+
+  if (millis() - cancelMillis > 10000) {
+    currentMenu->cancelCancel();
+  }
 }
 
 void checkWiFi() {
@@ -392,6 +412,7 @@ void checkWiFi() {
       dev2.buzzing = false;
       dev3.buzzing = false;
       delay(500);
+      cancelMillis = millis();
       return;
     }
     Serial.print("Received packet! Size: ");
