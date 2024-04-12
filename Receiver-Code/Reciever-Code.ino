@@ -1,5 +1,3 @@
-//reconnecting
-
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
@@ -165,6 +163,11 @@ void loop() {
     if (memcmp(packet, shutUp, 6) == 0){
       pinMode(BUZZER, INPUT);
       buzzerState = HIGH;
+    }
+    else if (memcmp(packet, macAddress, 6) == 0) {
+      UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+      UDP.write(receivedMessage, 14);
+      UDP.endPacket();
     }
       }
       }     
