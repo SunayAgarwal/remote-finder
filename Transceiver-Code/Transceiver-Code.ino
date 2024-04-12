@@ -243,6 +243,17 @@ class Menu {
           menuItems[2] = "Speaker: On";
         }
         highlightOption();
+      } else if (menuItems[cursorIndex] == "Cancel") {
+        dev1.buzzing = false;
+        dev2.buzzing = false;
+        dev3.buzzing = false;
+        menuItems[2] = "";
+        cursorMax = 1;
+        cursorUp();
+        uint8_t shutUp [] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(shutUp, 6);
+        UDP.endPacket();
       }
     }
 
