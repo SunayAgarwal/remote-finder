@@ -36,8 +36,8 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RST)
 #define buttonIn 26
 short aState;
 short aLastState;
-bool button;
-bool buttonLastState;
+bool button = false;
+bool buttonLastState = false;
 short up;
 short down;
 short increment = 2;
@@ -196,6 +196,8 @@ class Menu {
         if (title == "Devices" || title == "Settings" || title == "Credits") {
           mainMenu->printMenu();
         } else if (title == "Device One" || title == "Device Two" || title == "Device Three") {
+          menuItems[2] = "      ";
+          cursorMax = 1;
           devices->printMenu();
           dev1.buzzing = false;
           dev2.buzzing = false;
@@ -247,7 +249,7 @@ class Menu {
         dev1.buzzing = false;
         dev2.buzzing = false;
         dev3.buzzing = false;
-        menuItems[2] = "";
+        menuItems[2] = "      ";
         cursorMax = 1;
         cursorUp();
         uint8_t shutUp [] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
