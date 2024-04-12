@@ -277,6 +277,42 @@ class Menu {
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
         UDP.endPacket();
+      }else if (menuItems[cursorIndex] == "Roll Call") {
+
+        dev1.startBuzz();
+        previousMillis = millis();
+        while(previousMillis - millis() < 1500){
+        }
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(shutUp, 6);
+        UDP.endPacket();
+        previousMillis = millis();
+        
+        for(int i=0; i<2; i++){
+        while(previousMillis - millis() < 250){
+        }
+        dev2.startBuzz();
+        previousMillis = millis();
+        while(previousMillis - millis() < 500){
+        }
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(shutUp, 6);
+        UDP.endPacket();
+        previousMillis = millis();
+        }
+
+        for(int i=0; i<3; i++){
+        while(previousMillis - millis() < 200){
+        }
+        dev3.startBuzz();
+        previousMillis = millis();
+        while(previousMillis - millis() < 300){
+        }
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(shutUp, 6);
+        UDP.endPacket();
+        previousMillis = millis();
+        }
       }
     }
 
