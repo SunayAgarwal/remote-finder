@@ -3,16 +3,17 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-#define BUZZER 3   //D1
+#define BUZZER 2   //D1
 
 const char* ssid = "ESP32AP1";
 const char* password = "123456789";
 const int UDPport = 1234;
 
-bool buzzerState = LOW;
+bool buzzerState = HIGH;
 
 WiFiUDP UDP;
 uint8_t receivedMessage[] = {0x50, 0x61, 0x63, 0x6B, 0x65, 0x74, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64};
+uint8_t shutUp[] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
 IPAddress host(192,168,4, 1);
 
 /*
@@ -40,7 +41,7 @@ return packetString;
 
 void setup() {
   Serial.begin(115200);
-  pinMode(BUZZER, OUTPUT);
+  pinMode(BUZZER, INPUT);
   // Connect to WiFi
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi...");
@@ -138,22 +139,40 @@ void loop() {
     Serial.println();
     uint8_t macAddress[6];
     WiFi.macAddress(macAddress);
-    if (memcmp(packet, macAddress, 6) == 0 && buzzerState == LOW) {
-      buzzerState = HIGH;
-      Serial.println(buzzerState);
-      UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
-      UDP.write(receivedMessage, 14);
-      UDP.endPacket();
-    }
-    else if (memcmp(packet, macAddress, 6) == 0) {
+    if (memcmp(packet, macAddress, 6) == 0 && buzzerState == HIGH) {
+      pinMode(BUZZER, OUTPUT);
       buzzerState = LOW;
+      digitalWrite(BUZZER, buzzerState);
       Serial.println(buzzerState);
       UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
       UDP.write(receivedMessage, 14);
       UDP.endPacket();
+      unsigned long previousMillis = millis();
+      while (millis() - previousMillis < 10000){
+        //check for shut up packet
+        int packetSize = UDP.parsePacket();
+  if (packetSize) {
+    Serial.print("Received packet! Size: ");
+    Serial.println(packetSize); 
+    int len = UDP.read(packet, 255);
+    Serial.print("Packet received: ");
+    for(int b=0; b<6; ++b) {
+      Serial.print(packet[b], HEX);
+      // Add ":" as needed
+      if (b<5) Serial.print(":");
     }
+    Serial.println();
+    if (memcmp(packet, shutUp, 6) == 0){
+      pinMode(BUZZER, INPUT);
+      buzzerState = HIGH;
+    }
+      }
+      }     
+      pinMode(BUZZER, INPUT);
+      buzzerState = HIGH;
+    }
+    
   }
-    digitalWrite(BUZZER, buzzerState);
 }
 
 void sendMACAddress() {
