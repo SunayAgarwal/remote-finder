@@ -26,14 +26,14 @@
 #define TFT_DC 33
 #define TFT_SDA 21
 #define TFT_SCL 22
-#define SPK 26
+#define SPK 27
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RST);
 
 // Rotary encoder defs
 #define outputA 18
 #define outputB 4
-#define buttonIn 27
+#define buttonIn 26
 short aState;
 short aLastState;
 bool button;
@@ -41,7 +41,6 @@ bool buttonLastState;
 short up;
 short down;
 short increment = 2;
-short dumbass = 1;
 uint16_t color[8] = { ST77XX_RED, ST77XX_ORANGE, ST77XX_YELLOW, ST77XX_GREEN, ST77XX_BLUE, ST77XX_MAGENTA, ST77XX_WHITE, ST77XX_BLACK };  // Array of colors for easy access
 
 WiFiUDP UDP;
@@ -118,6 +117,7 @@ class Device {
 
 Device dev1;
 Device dev2;
+Device dev3;
 Menu* currentMenu;
 Menu* settings;
 Menu* devices;
@@ -195,20 +195,21 @@ class Menu {
       } else if (menuItems[cursorIndex] == "<< Back") {
         if (title == "Devices" || title == "Settings" || title == "Credits") {
           mainMenu->printMenu();
-        } else if (title == "Device One" || title == "Device Two") {
+        } else if (title == "Device One" || title == "Device Two" || title == "Device Three") {
           devices->printMenu();
           dev1.buzzing = false;
           dev2.buzzing = false;
+          dev3.buzzing = false;
         }
       } else if (menuItems[cursorIndex] == "Light Mode" || menuItems[cursorIndex] == "Dark Mode") {
         if (menuItems[cursorIndex] == "Light Mode") { 
           color[6] = ST77XX_BLACK;
           color[7] = ST77XX_WHITE;
-          menuItems[2] = "Dark Mode";
+          menuItems[1] = "Dark Mode";
         } else if (menuItems[cursorIndex] == "Dark Mode") {
           color[7] = ST77XX_BLACK;
           color[6] = ST77XX_WHITE;
-          menuItems[2] = "Light Mode";
+          menuItems[1] = "Light Mode";
         }
         printMenu();
       } else if (menuItems[cursorIndex] == "Credits") {
@@ -217,21 +218,25 @@ class Menu {
         dev1.menu->printMenu();
       } else if (menuItems[cursorIndex] == "Device Two") {
         dev2.menu->printMenu();
+      } else if (menuItems[cursorIndex] == "Device Three") {
+        dev3.menu->printMenu();
       } else if (menuItems[cursorIndex] == "Play Sound") {
         if (title == "Device One") {
           dev1.startBuzz();
         } else if (title == "Device Two") {
           dev2.startBuzz();
+        } else if (title == "Device Three") {
+          dev3.startBuzz();
         }
       } else if (menuItems[cursorIndex] == "Speaker: On" || menuItems[cursorIndex] == "Speaker: Off") {
         if (speaker) {
           speaker = false;
-          menuItems[3] = "Speaker: Off";
+          menuItems[2] = "Speaker: Off";
         } else if (!speaker) {
           speaker = true;
-          menuItems[3] = "Speaker: On ";
+          menuItems[2] = "Speaker: On ";
           unHighlightOption();
-          menuItems[3] = "Speaker: On";
+          menuItems[2] = "Speaker: On";
         }
         highlightOption();
       }
@@ -255,13 +260,14 @@ class Menu {
     }
 
     Menu(bool idk) {
-      devices = new Menu("Devices", "<< Back", "Device One", "Device Two", "", 2);
+      devices = new Menu("Devices", "<< Back", "", "", "", 0);
       settings = new Menu("Settings", "<< Back", "Light Mode", "Speaker: On", "", 2);
       mainMenu = new Menu("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
       credits = new Menu("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
       currentMenu = mainMenu;
       dev1.menu = new Menu("Device One", "<< Back", "Play Sound", "", "", 1);
       dev2.menu = new Menu("Device Two", "<< Back", "Play Sound", "", "", 1);
+      dev3.menu = new Menu("Device Three", "<< Back", "Play Sound", "", "", 1);
     }
 };
 
@@ -306,6 +312,7 @@ void loop() {
   disable_watchdog_timers();
   disable_brownout_detector();
 
+  clients = WiFi.softAPgetStationNum(); 
   checkWiFi();
   
   aState = digitalRead(outputA);
@@ -332,15 +339,30 @@ void loop() {
   if (button == true && buttonLastState == false) {
     currentMenu->selectOption();
   }
+
+  if (clients > prevClients && clients <= 3) {
+    devices->cursorMax = clients;
+    if (clients > 0) {
+      devices->menuItems[1] = "Device One";
+    }
+    if (clients > 1) {
+      devices->menuItems[2] = "Device Two";
+    }
+    if (clients > 2) {
+      devices->menuItems[3] = "Device Three";
+    }
+    prevClients = clients;
+  }
+
   aLastState = aState;
   buttonLastState = button;
-  prevClients = clients;
 
   if (dev1.buzzing) {
     dev1.buzz();
-  }
-  if (dev2.buzzing) {
+  } else if (dev2.buzzing) {
     dev2.buzz();
+  } else if (dev3.buzzing) {
+    dev3.buzz();
   }
 }
 
@@ -351,6 +373,7 @@ void checkWiFi() {
     if (memcmp(receivedMessageChar, packet, 14) == 0) {
       dev1.buzzing = false;
       dev2.buzzing = false;
+      dev3.buzzing = false;
       delay(500);
       return;
     }
@@ -365,7 +388,18 @@ void checkWiFi() {
     }
     Serial.println();    
     //char* addressPacket = (char*) packet;
-    memcpy(dev1.address, packet, 6);
+    if (memcmp(dev1.address, packet, 6) == 0 || !dev1.connected) {
+      memcpy(dev1.address, packet, 6);
+      dev1.connected = true;
+    } else if (memcmp(dev2.address, packet, 6) == 0 || !dev2.connected) {
+      memcpy(dev2.address, packet, 6);
+      dev2.connected = true;
+      if (clients < 2) {clients = 2;}
+    } else if (memcmp(dev3.address, packet, 6) == 0 || !dev3.connected) {
+      memcpy(dev3.address, packet, 6);
+      dev3.connected = true;
+      if (clients < 3) {clients = 3;}
+    }
     //dev1.addAddress(packet);    //packet is new MAC address
     for(int b=0; b<14; ++b) {
       Serial.write(receivedMessage[b]);
@@ -381,5 +415,5 @@ void checkWiFi() {
 
 /**
  * Bug list
- * 
- */
+ * back doesnt stop buzzing
+*/
