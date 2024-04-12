@@ -172,6 +172,7 @@ class Menu {
     void cancelCancel() {
       if (menuItems[2] != "Cancel") {return;}
       menuItems[2] = "      ";
+      cursorMax = 1;
       if (cursorIndex == 2) {
         cursorUp();
       }
@@ -250,7 +251,9 @@ class Menu {
         }
         menuItems[2] = "Cancel";
         cursorMax = 2;
-        tft.setCursor(5, 85);
+        tft.setTextSize(3);
+        tft.setTextColor(color[6], color[7]);
+        tft.setCursor(5, 120);
         tft.print("Cancel");
       } else if (menuItems[cursorIndex] == "Speaker: On" || menuItems[cursorIndex] == "Speaker: Off") {
         if (speaker) {
