@@ -228,6 +228,10 @@ class Menu {
         } else if (title == "Device Three") {
           dev3.startBuzz();
         }
+        menuItems[2] = "Cancel";
+        cursorMax = 2;
+        cursorDown();
+        cursorUp();
       } else if (menuItems[cursorIndex] == "Speaker: On" || menuItems[cursorIndex] == "Speaker: Off") {
         if (speaker) {
           speaker = false;
