@@ -80,8 +80,9 @@ class Device {
     unsigned long previousMillis;
 
     void startBuzz() {
-    disable_watchdog_timers();
-    disable_brownout_detector();
+      disable_watchdog_timers();
+      disable_brownout_detector();
+      cancelMillis = millis();
       this->buzzing = true;
       Serial.print("Sending: ");
       for(int b=0; b<6; ++b) {
@@ -97,6 +98,7 @@ class Device {
     }
     
     void buzz() {
+      cancelMillis = millis();
       if ((millis() - previousMillis) > 10000) {
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(address, 6);
