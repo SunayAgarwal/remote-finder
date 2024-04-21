@@ -282,33 +282,40 @@ class Menu {
 
         dev1.startBuzz();
         previousMillis = millis();
-        while(millis() - previousMillis < 1500){
+        while(millis() - previousMillis < 1000){
         }
-
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
         UDP.endPacket();
         previousMillis = millis();
         
-        for(int i = 0; i <= 2; i++){
-        while(millis() - previousMillis < 250){
+        while(millis() - previousMillis < 1500){
+        }
+        previousMillis = millis();
+
+        for(int i=0; i<2; i++){
+        while(millis() - previousMillis < 500){
         }
         dev2.startBuzz();
         previousMillis = millis();
-        while(millis() - previousMillis < 500){
+        while(millis() - previousMillis < 1000){
         }
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
         UDP.endPacket();
         previousMillis = millis();
         }
+        
+        while(millis() - previousMillis < 1500){
+        }
+        previousMillis = millis();
 
-        for(int i = 0; i <= 3; i++){
-        while(millis() - previousMillis < 200){
+        for(int i=0; i<3; i++){
+        while(millis() - previousMillis < 500){
         }
         dev3.startBuzz();
         previousMillis = millis();
-        while(millis() - previousMillis < 300){
+        while(millis() - previousMillis < 1000){
         }
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
