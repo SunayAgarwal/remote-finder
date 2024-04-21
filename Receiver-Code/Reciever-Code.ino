@@ -1,3 +1,5 @@
+//reconnecting
+
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
@@ -100,7 +102,7 @@ void loop() {
   int packetSize = UDP.parsePacket();
   while (packetSize == 0) {
     packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
-    if (millis() - previousMillis > 10000) {
+    if (millis() - previousMillis > 100) {
       sendMACAddress();
     }
   }
@@ -163,6 +165,7 @@ void loop() {
     if (memcmp(packet, shutUp, 6) == 0){
       pinMode(BUZZER, INPUT);
       buzzerState = HIGH;
+      previousMillis = 0;
     }
     else if (memcmp(packet, macAddress, 6) == 0) {
       UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
@@ -173,6 +176,7 @@ void loop() {
       }     
       pinMode(BUZZER, INPUT);
       buzzerState = HIGH;
+
     }
     
   }
