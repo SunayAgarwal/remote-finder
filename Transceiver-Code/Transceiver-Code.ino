@@ -49,7 +49,9 @@ const int UDPport = 1234;
 uint8_t packet[255];
 IPAddress broadcast(192,168,4, 255);
 uint8_t receivedMessage[] = {0x50, 0x61, 0x63, 0x6B, 0x65, 0x74, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64};
+uint8_t shutUp [] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
 
+unsigned long previousMillis;
 
 short clients;
 short prevClients;
@@ -273,7 +275,6 @@ class Menu {
         menuItems[2] = "      ";
         cursorMax = 1;
         cursorUp();
-        uint8_t shutUp [] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
         UDP.endPacket();
@@ -281,19 +282,20 @@ class Menu {
 
         dev1.startBuzz();
         previousMillis = millis();
-        while(previousMillis - millis() < 1500){
+        while(millis() - previousMillis < 1500){
         }
+
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
         UDP.endPacket();
         previousMillis = millis();
         
-        for(int i=0; i<2; i++){
-        while(previousMillis - millis() < 250){
+        for(int i = 0; i <= 2; i++){
+        while(millis() - previousMillis < 250){
         }
         dev2.startBuzz();
         previousMillis = millis();
-        while(previousMillis - millis() < 500){
+        while(millis() - previousMillis < 500){
         }
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
@@ -301,12 +303,12 @@ class Menu {
         previousMillis = millis();
         }
 
-        for(int i=0; i<3; i++){
-        while(previousMillis - millis() < 200){
+        for(int i = 0; i <= 3; i++){
+        while(millis() - previousMillis < 200){
         }
         dev3.startBuzz();
         previousMillis = millis();
-        while(previousMillis - millis() < 300){
+        while(millis() - previousMillis < 300){
         }
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
