@@ -53,7 +53,8 @@ uint8_t shutUp [] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
 uint8_t rollCall2 [] = {0x63, 0x61, 0x6C, 0x6C, 0x32};
 uint8_t rollCall3 [] = {0x63, 0x61, 0x6C, 0x6C, 0x33};
 
-unsigned long previousMillis;
+unsigned long rollCallMillis;
+short rollCallStep = 0;
 
 short clients;
 short prevClients;
@@ -278,45 +279,8 @@ class Menu {
         UDP.beginPacket(broadcast, UDPport);
         UDP.write(shutUp, 6);
         UDP.endPacket();
-      }else if (menuItems[cursorIndex] == "Roll Call") {
-
-        dev1.startBuzz();
-        previousMillis = millis();
-        while(millis() - previousMillis < 1000){
-        }
-        UDP.beginPacket(broadcast, UDPport);
-        UDP.write(shutUp, 6);
-        UDP.endPacket();
-        previousMillis = millis();
-        
-        while(millis() - previousMillis < 500){
-        }
-        
-        UDP.beginPacket(broadcast, UDPport);
-        UDP.write(rollCall2, 5);
-        UDP.endPacket();
-        previousMillis = millis();        
-        while(millis() - previousMillis < 1250){
-        }
-        UDP.beginPacket(broadcast, UDPport);
-        UDP.write(dev2.address, 6);
-        UDP.endPacket();
-
-        previousMillis = millis();
-        
-        while(millis() - previousMillis < 5000){
-        }
-        
-        UDP.beginPacket(broadcast, UDPport);
-        UDP.write(rollCall3, 5);
-        UDP.endPacket();
-        previousMillis = millis();        
-        while(millis() - previousMillis < 1200){
-        }
-        UDP.beginPacket(broadcast, UDPport);
-        UDP.write(dev3.address, 6);
-        UDP.endPacket();
-        
+      } else if (menuItems[cursorIndex] == "Roll Call") {
+        rollCallStep = 1;
       }
     }
 
@@ -496,7 +460,61 @@ void checkWiFi() {
   }
 }
 
-/**
- * Bug list
- * back doesnt stop buzzing
-*/
+void checkRoll() {
+  switch (rollCallStep) {
+    case 1:
+      dev1.startBuzz();
+      rollCallStep = 2;
+      rollCallMillis = millis();
+      break;
+
+    case 2:
+      if (millis() - rollCallMillis > 1000) {
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(shutUp, 6);
+        UDP.endPacket();
+        rollCallStep = 3;
+        rollCallMillis = millis();
+      }
+      break;
+
+    case 3:
+      if (millis() - rollCallMillis > 500) {
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(rollCall2, 5);
+        UDP.endPacket();
+        rollCallStep = 4;
+        rollCallMillis = millis();
+      }
+      break;
+
+    case 4:
+      if (millis() - rollCallMillis > 1250) {
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(dev2.address, 6);
+        UDP.endPacket();
+        rollCallStep = 5;
+        rollCallMillis = millis();
+      }
+      break;
+
+    case 5:
+      if (millis() - rollCallMillis > 5000) {
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(rollCall3, 5);
+        UDP.endPacket();
+        rollCallStep = 6;
+        rollCallMillis = millis();
+      }
+      break;
+
+    case 6:
+      if (millis() - rollCallMillis > 1200) {
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(dev3.address, 6);
+        UDP.endPacket();
+        rollCallStep = 0;
+      }
+      break;
+  }
+}
