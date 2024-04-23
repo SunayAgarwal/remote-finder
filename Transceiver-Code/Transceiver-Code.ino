@@ -53,7 +53,7 @@ uint8_t shutUp [] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
 uint8_t rollCall2 [] = {0x63, 0x61, 0x6C, 0x6C, 0x32};
 uint8_t rollCall3 [] = {0x63, 0x61, 0x6C, 0x6C, 0x33};
 
-unsigned long rollCallMillis;
+unsigned long rollCallMillis = millis();
 short rollCallStep = 0;
 
 short clients;
@@ -356,6 +356,8 @@ void loop() {
 
   clients = WiFi.softAPgetStationNum(); 
   checkWiFi();
+
+  checkRoll();
   
   aState = digitalRead(outputA);
   button = digitalRead(buttonIn);
