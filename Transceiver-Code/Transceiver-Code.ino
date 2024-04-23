@@ -50,6 +50,8 @@ uint8_t packet[255];
 IPAddress broadcast(192,168,4, 255);
 uint8_t receivedMessage[] = {0x50, 0x61, 0x63, 0x6B, 0x65, 0x74, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64};
 uint8_t shutUp [] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
+uint8_t rollCall2 [] = {0x63, 0x61, 0x6C, 0x6C, 0x32};
+uint8_t rollCall3 [] = {0x63, 0x61, 0x6C, 0x6C, 0x33};
 
 unsigned long previousMillis;
 
@@ -217,8 +219,6 @@ class Menu {
         if (title == "Devices" || title == "Settings" || title == "Credits") {
           mainMenu->printMenu();
         } else if (title == "Device One" || title == "Device Two" || title == "Device Three") {
-          menuItems[2] = "      ";
-          cursorMax = 1;
           devices->printMenu();
           dev1.buzzing = false;
           dev2.buzzing = false;
@@ -243,7 +243,7 @@ class Menu {
         dev2.menu->printMenu();
       } else if (menuItems[cursorIndex] == "Device Three") {
         dev3.menu->printMenu();
-      } else if (menuItems[cursorIndex] == "Play Sound") {
+      } else if (menuItems[cursorIndex] == "Locate Device") {
         if (title == "Device One") {
           dev1.startBuzz();
         } else if (title == "Device Two") {
@@ -289,39 +289,34 @@ class Menu {
         UDP.endPacket();
         previousMillis = millis();
         
-        while(millis() - previousMillis < 1500){
-        }
-        previousMillis = millis();
-
-        for(int i=0; i<2; i++){
         while(millis() - previousMillis < 500){
-        }
-        dev2.startBuzz();
-        previousMillis = millis();
-        while(millis() - previousMillis < 1000){
-        }
-        UDP.beginPacket(broadcast, UDPport);
-        UDP.write(shutUp, 6);
-        UDP.endPacket();
-        previousMillis = millis();
         }
         
-        while(millis() - previousMillis < 1500){
-        }
-        previousMillis = millis();
-
-        for(int i=0; i<3; i++){
-        while(millis() - previousMillis < 500){
-        }
-        dev3.startBuzz();
-        previousMillis = millis();
-        while(millis() - previousMillis < 1000){
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(rollCall2, 5);
+        UDP.endPacket();
+        previousMillis = millis();        
+        while(millis() - previousMillis < 1250){
         }
         UDP.beginPacket(broadcast, UDPport);
-        UDP.write(shutUp, 6);
+        UDP.write(dev2.address, 6);
         UDP.endPacket();
+
         previousMillis = millis();
+        
+        while(millis() - previousMillis < 5000){
         }
+        
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(rollCall3, 5);
+        UDP.endPacket();
+        previousMillis = millis();        
+        while(millis() - previousMillis < 1200){
+        }
+        UDP.beginPacket(broadcast, UDPport);
+        UDP.write(dev3.address, 6);
+        UDP.endPacket();
+        
       }
     }
 
@@ -348,9 +343,9 @@ class Menu {
       mainMenu = new Menu("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
       credits = new Menu("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
       currentMenu = mainMenu;
-      dev1.menu = new Menu("Device One", "<< Back", "Play Sound", "", "", 1);
-      dev2.menu = new Menu("Device Two", "<< Back", "Play Sound", "", "", 1);
-      dev3.menu = new Menu("Device Three", "<< Back", "Play Sound", "", "", 1);
+      dev1.menu = new Menu("Device One", "<< Back", "Locate Device", "", "", 1);
+      dev2.menu = new Menu("Device Two", "<< Back", "Locate Device", "", "", 1);
+      dev3.menu = new Menu("Device Three", "<< Back", "Locate Device", "", "", 1);
     }
 };
 
