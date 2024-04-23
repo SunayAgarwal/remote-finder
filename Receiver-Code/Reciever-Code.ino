@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-#define BUZZER 2   //D1
+#define BUZZER 2  //D1
 
 const char* ssid = "ESP32AP1";
 const char* password = "123456789";
@@ -12,9 +12,13 @@ const int UDPport = 1234;
 bool buzzerState = HIGH;
 
 WiFiUDP UDP;
-uint8_t receivedMessage[] = {0x50, 0x61, 0x63, 0x6B, 0x65, 0x74, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64};
-uint8_t shutUp[] = {0x73, 0x68, 0x75, 0x74, 0x55, 0x70};
-IPAddress host(192,168,4, 1);
+uint8_t receivedMessage[] = { 0x50, 0x61, 0x63, 0x6B, 0x65, 0x74, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64 };
+uint8_t shutUp[] = { 0x73, 0x68, 0x75, 0x74, 0x55, 0x70 };
+uint8_t rollCall2[] = { 0x63, 0x61, 0x6C, 0x6C, 0x32, 0x70 };
+uint8_t rollCall3[] = { 0x63, 0x61, 0x6C, 0x6C, 0x33, 0x70 };
+IPAddress host(192, 168, 4, 1);
+
+int flag;
 
 /*
 String charString() {
@@ -34,9 +38,35 @@ return macAddress;
 uint8_t macAddressInt = WiFi.macAddress().toInt();
 
 
-String convertToString(char* packet){
-String packetString(packet);
-return packetString;
+String convertToString(char* packet) {
+  String packetString(packet);
+  return packetString;
+}
+
+
+void sendMACAddress() {
+  /*
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    String macAddress = "";
+    for (int i = 0; i < 6; i++) {
+      macAddress += String(mac[i], HEX);
+      if (i < 5) {
+        macAddress += ":";
+  }
+    }
+    */
+  uint8_t macAddress[6];
+  WiFi.macAddress(macAddress);
+  for (int b = 0; b < 6; ++b) {
+    Serial.print(macAddress[b], HEX);
+    // Add ":" as needed
+    if (b < 5) Serial.print(":");
+  }
+  Serial.println();
+  UDP.beginPacket(host, UDPport);
+  UDP.write(macAddress, 6);
+  UDP.endPacket();
 }
 
 void setup() {
@@ -61,30 +91,30 @@ void setup() {
   unsigned long previousMillis = millis();
   int packetSize = UDP.parsePacket();
   while (packetSize == 0) {
-    packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
+    packetSize = UDP.parsePacket();  //if goes through 20 iterations with no response, send again
     if (millis() - previousMillis > 10000) {
       sendMACAddress();
       previousMillis = millis();
     }
   }
-  if (packetSize){
+  if (packetSize) {
     Serial.print("Received packet! Size: ");
     Serial.println(packetSize);
     int len = UDP.read(packet, 255);
-    for(int b=0; b<14; ++b) {
-      Serial.print((char)packet[b]);      
+    for (int b = 0; b < 14; ++b) {
+      Serial.print((char)packet[b]);
     }
 
     Serial.println();
     String receivedMessage = "Packetreceived";
     char receivedMessageChar[14];
-    receivedMessage.toCharArray(receivedMessageChar,15);
-    for(int b=0; b<14; ++b) {
-      Serial.print(receivedMessageChar[b]);      
+    receivedMessage.toCharArray(receivedMessageChar, 15);
+    for (int b = 0; b < 14; ++b) {
+      Serial.print(receivedMessageChar[b]);
     }
-    if (memcmp(packet, receivedMessageChar, 14) != 0) {      //send again, use millis i.e. 500 millis since sent
+    if (memcmp(packet, receivedMessageChar, 14) != 0) {  //send again, use millis i.e. 500 millis since sent
       Serial.println("Stuck");
-      while (true){
+      while (true) {
         delay(10000);
       }
     }
@@ -98,43 +128,43 @@ void loop() {
     WiFi.begin(ssid, password);
     UDP.begin(UDPport);
     sendMACAddress();
-  unsigned long previousMillis = millis();
-  int packetSize = UDP.parsePacket();
-  while (packetSize == 0) {
-    packetSize = UDP.parsePacket();                           //if goes through 20 iterations with no response, send again
-    if (millis() - previousMillis > 100) {
-      sendMACAddress();
+    unsigned long previousMillis = millis();
+    int packetSize = UDP.parsePacket();
+    while (packetSize == 0) {
+      packetSize = UDP.parsePacket();  //if goes through 20 iterations with no response, send again
+      if (millis() - previousMillis > 100) {
+        sendMACAddress();
+      }
     }
-  }
-  if (packetSize){
-    Serial.print("Received packet! Size: ");
-    Serial.println(packetSize);
-    int len = UDP.read(packet, 255);
-    for(int b=0; b<14; ++b) {
-      Serial.print((char)packet[b]);      
-    }
+    if (packetSize) {
+      Serial.print("Received packet! Size: ");
+      Serial.println(packetSize);
+      int len = UDP.read(packet, 255);
+      for (int b = 0; b < 14; ++b) {
+        Serial.print((char)packet[b]);
+      }
 
-    Serial.println();
-    String receivedMessage = "Packetreceived";
-    char receivedMessageChar[14];
-    receivedMessage.toCharArray(receivedMessageChar,15);
-    for(int b=0; b<14; ++b) {
-      Serial.print(receivedMessageChar[b]);      
-    }
+      Serial.println();
+      String receivedMessage = "Packetreceived";
+      char receivedMessageChar[14];
+      receivedMessage.toCharArray(receivedMessageChar, 15);
+      for (int b = 0; b < 14; ++b) {
+        Serial.print(receivedMessageChar[b]);
+      }
     }
     delay(100);
   }
-  
+
   int packetSize = UDP.parsePacket();
   if (packetSize) {
     Serial.print("Received packet! Size: ");
-    Serial.println(packetSize); 
+    Serial.println(packetSize);
     int len = UDP.read(packet, 255);
     Serial.print("Packet received: ");
-    for(int b=0; b<6; ++b) {
+    for (int b = 0; b < 6; ++b) {
       Serial.print(packet[b], HEX);
       // Add ":" as needed
-      if (b<5) Serial.print(":");
+      if (b < 5) Serial.print(":");
     }
     Serial.println();
     uint8_t macAddress[6];
@@ -148,61 +178,116 @@ void loop() {
       UDP.write(receivedMessage, 14);
       UDP.endPacket();
       unsigned long previousMillis = millis();
-      while (millis() - previousMillis < 10000){
+      while (millis() - previousMillis < 10000) {
         //check for shut up packet
         int packetSize = UDP.parsePacket();
-  if (packetSize) {
-    Serial.print("Received packet! Size: ");
-    Serial.println(packetSize); 
-    int len = UDP.read(packet, 255);
-    Serial.print("Packet received: ");
-    for(int b=0; b<6; ++b) {
-      Serial.print(packet[b], HEX);
-      // Add ":" as needed
-      if (b<5) Serial.print(":");
-    }
-    Serial.println();
-    if (memcmp(packet, shutUp, 6) == 0){
-      pinMode(BUZZER, INPUT);
-      buzzerState = HIGH;
-      previousMillis = 0;
-    }
-    else if (memcmp(packet, macAddress, 6) == 0) {
-      UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
-      UDP.write(receivedMessage, 14);
-      UDP.endPacket();
-    }
+        if (packetSize) {
+          Serial.print("Received packet! Size: ");
+          Serial.println(packetSize);
+          int len = UDP.read(packet, 255);
+          Serial.print("Packet received: ");
+          for (int b = 0; b < 6; ++b) {
+            Serial.print(packet[b], HEX);
+            // Add ":" as needed
+            if (b < 5) Serial.print(":");
+          }
+          Serial.println();
+          if (memcmp(packet, shutUp, 6) == 0) {
+            pinMode(BUZZER, INPUT);
+            buzzerState = HIGH;
+            previousMillis = 0;
+          } else if (memcmp(packet, macAddress, 6) == 0) {
+            UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+            UDP.write(receivedMessage, 14);
+            UDP.endPacket();
+          }
+        }
       }
-      }     
       pinMode(BUZZER, INPUT);
       buzzerState = HIGH;
 
     }
-    
-  }
-}
 
-void sendMACAddress() {
-    /*
-    uint8_t mac[6];
-    WiFi.macAddress(mac);
-    String macAddress = "";
-    for (int i = 0; i < 6; i++) {
-      macAddress += String(mac[i], HEX);
-      if (i < 5) {
-        macAddress += ":";
+    else if (memcmp(packet, rollCall2, 5) == 0) {
+      Serial.println("Start Roll 2");
+      packetSize = 0;
+     packetSize = UDP.parsePacket();
+      while (packetSize == 0) {
+        packetSize = UDP.parsePacket();
+      }
+        Serial.print("Received packet! Size: ");
+        Serial.println(packetSize);
+        int len = UDP.read(packet, 255);
+        Serial.print("Packet received: ");
+        for (int b = 0; b < 6; ++b) {
+          Serial.print(packet[b], HEX);
+          // Add ":" as needed
+          if (b < 5) Serial.print(":");
+        }
+        Serial.println();
+        uint8_t macAddress[6];
+        WiFi.macAddress(macAddress);
+        if (memcmp(packet, macAddress, 6) == 0) {
+          Serial.println("roll call 2");
+          pinMode(BUZZER, OUTPUT);
+          buzzerState = LOW;
+          digitalWrite(BUZZER, buzzerState);
+          Serial.println(buzzerState);
+          UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+          UDP.write(receivedMessage, 14);
+          UDP.endPacket();
+          delay(1000);
+          pinMode(BUZZER, INPUT);
+          delay(500);
+          pinMode(BUZZER, OUTPUT);
+          digitalWrite(BUZZER, buzzerState);
+          delay(1000);
+          pinMode(BUZZER, INPUT);
+          buzzerState = HIGH;
+        }
+
+    }
+
+    else if (memcmp(packet, rollCall3, 5) == 0) {
+     packetSize = 0;
+     packetSize = UDP.parsePacket();
+      while (packetSize == 0) {
+        packetSize = UDP.parsePacket();
+      }
+        Serial.print("Received packet! Size: ");
+        Serial.println(packetSize);
+        int len = UDP.read(packet, 255);
+        Serial.print("Packet received: ");
+        for (int b = 0; b < 6; ++b) {
+          Serial.print(packet[b], HEX);
+          // Add ":" as needed
+          if (b < 5) Serial.print(":");
+        }
+        Serial.println();
+        uint8_t macAddress[6];
+        WiFi.macAddress(macAddress);
+        if (memcmp(packet, macAddress, 6) == 0) {
+          pinMode(BUZZER, OUTPUT);
+          buzzerState = LOW;
+          digitalWrite(BUZZER, buzzerState);
+          Serial.println(buzzerState);
+          UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+          UDP.write(receivedMessage, 14);
+          UDP.endPacket();
+          delay(1000);
+          pinMode(BUZZER, INPUT);
+          delay(500);
+          pinMode(BUZZER, OUTPUT);
+          digitalWrite(BUZZER, buzzerState);
+          delay(1000);
+          pinMode(BUZZER, INPUT);
+          delay(500);
+          pinMode(BUZZER, OUTPUT);
+          digitalWrite(BUZZER, buzzerState);
+          delay(1000);
+          pinMode(BUZZER, INPUT);
+          buzzerState = HIGH;
+        }
+      }
+    }
   }
-    }
-    */
-    uint8_t macAddress[6];
-    WiFi.macAddress(macAddress);
-    for(int b=0; b<6; ++b) {
-      Serial.print(macAddress[b], HEX);
-      // Add ":" as needed
-      if (b<5) Serial.print(":");
-    }
-    Serial.println();
-    UDP.beginPacket(host, UDPport);
-    UDP.write(macAddress, 6);
-    UDP.endPacket();
-}
