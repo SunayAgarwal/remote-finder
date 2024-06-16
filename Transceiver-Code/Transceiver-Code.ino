@@ -129,6 +129,7 @@ Device dev3;
 Menu* currentMenu;
 Menu* settings;
 Menu* devices;
+Menu* removeDevices;
 Menu* mainMenu;
 Menu* credits;
 
@@ -306,6 +307,7 @@ class Menu {
       settings = new Menu("Settings", "<< Back", "Light Mode", "Speaker: On", "", 2);
       mainMenu = new Menu("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
       credits = new Menu("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
+      removeDevices = new Menu("Remove Device", "<< Back", "", "", "", 0);
       currentMenu = mainMenu;
       dev1.menu = new Menu("Device One", "<< Back", "Locate Device", "", "", 1);
       dev2.menu = new Menu("Device Two", "<< Back", "Locate Device", "", "", 1);
