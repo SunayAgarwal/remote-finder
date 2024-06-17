@@ -115,11 +115,7 @@ class Device {
     uint8_t getMAC() {
       return *address;
     }
-/*
-    void addAddress(uint8_t adr) { // WiFi, use this to pass MAC address of corresponding device on the menu
-      *address = adr.toInt();
-    }
-*/
+
     Device() {}
 };
 
@@ -215,6 +211,8 @@ class Menu {
       // this is the best way to do this because idk
       if (menuItems[cursorIndex] == "Devices") {
         devices->printMenu();
+      } else if (menuItems[cursorIndex] == "Remove Device") {
+        removeDevices->printMenu();
       } else if (menuItems[cursorIndex] == "Settings") {
         settings->printMenu();
       } else if (menuItems[cursorIndex] == "<< Back") {
@@ -225,6 +223,8 @@ class Menu {
           dev1.buzzing = false;
           dev2.buzzing = false;
           dev3.buzzing = false;
+        } else if (title == "Remove Device") {
+          settings->printMenu();
         }
       } else if (menuItems[cursorIndex] == "Light Mode" || menuItems[cursorIndex] == "Dark Mode") {
         if (menuItems[cursorIndex] == "Light Mode") { 
@@ -240,11 +240,49 @@ class Menu {
       } else if (menuItems[cursorIndex] == "Credits") {
         credits->printMenu();
       } else if (menuItems[cursorIndex] == "Device One") {
-        dev1.menu->printMenu();
+        if (title == "Devices") {
+          dev1.menu->printMenu();
+        } else {
+          if (dev2.connected == false && dev3.connected == false) {
+            dev1.connected = false;
+            devices->menuItems[1] = "";
+          } else if (dev3.connected == false) {
+            dev2.connected = false;
+            devices->menuItems[2] = "";
+          }
+          dev3.connected = false;
+          devices->menuItems[3] = "";
+          --clients;
+          --prevClients;
+          --devices->cursorMax;
+          memcpy(dev1.address, dev2.address, 6);
+          memcpy(dev2.address, dev3.address, 6);
+        }
       } else if (menuItems[cursorIndex] == "Device Two") {
-        dev2.menu->printMenu();
+        if (title == "Devices") {
+          dev2.menu->printMenu();
+        } else {
+          if (dev3.connected == false) {
+            dev2.connected = false;
+            devices->menuItems[2] = "";
+          }
+          devices->menuItems[3] = "";
+          dev3.connected = false;
+          --clients;
+          --prevClients;
+          --devices->cursorMax;
+          memcpy(dev2.address, dev3.address, 6);
+        }
       } else if (menuItems[cursorIndex] == "Device Three") {
-        dev3.menu->printMenu();
+        if (title == "Devices") {
+          dev3.menu->printMenu();
+        } else {
+          devices->menuItems[3] = "";
+          dev3.connected = false;
+          --clients;
+          --prevClients;
+          --devices->cursorMax;
+        }
       } else if (menuItems[cursorIndex] == "Locate Device") {
         if (title == "Device One") {
           dev1.startBuzz();
@@ -388,14 +426,18 @@ void loop() {
 
   if (clients > prevClients && clients <= 3) {
     devices->cursorMax = clients;
+    removeDevices->cursorMax = clients;
     if (clients > 0) {
       devices->menuItems[1] = "Device One";
+      removeDevices->menuItems[1] = "Device One";
     }
     if (clients > 1) {
       devices->menuItems[2] = "Device Two";
+      removeDevices->menuItems[2] = "Device Two";
     }
     if (clients > 2) {
       devices->menuItems[3] = "Device Three";
+      removeDevices->menuItems[3] = "Device Three";
     }
     prevClients = clients;
   }
