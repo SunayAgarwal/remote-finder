@@ -255,6 +255,7 @@ class Menu {
           --clients;
           --prevClients;
           --devices->cursorMax;
+          --removeDevices->cursorMax;
           memcpy(dev1.address, dev2.address, 6);
           memcpy(dev2.address, dev3.address, 6);
         }
@@ -271,6 +272,7 @@ class Menu {
           --clients;
           --prevClients;
           --devices->cursorMax;
+          --removeDevices->cursorMax;
           memcpy(dev2.address, dev3.address, 6);
         }
       } else if (menuItems[cursorIndex] == "Device Three") {
@@ -282,6 +284,7 @@ class Menu {
           --clients;
           --prevClients;
           --devices->cursorMax;
+          --removeDevices->cursorMax;
         }
       } else if (menuItems[cursorIndex] == "Locate Device") {
         if (title == "Device One") {
