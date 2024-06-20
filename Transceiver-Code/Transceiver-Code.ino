@@ -242,7 +242,7 @@ class Menu {
       } else if (menuItems[cursorIndex] == "Device One") {
         if (title == "Devices") {
           dev1.menu->printMenu();
-        } else {
+        } else if (title == "Remove Device") {
           if (dev2.connected == false && dev3.connected == false) {
             dev1.connected = false;
             devices->menuItems[1] = "";
@@ -258,11 +258,12 @@ class Menu {
           --removeDevices->cursorMax;
           memcpy(dev1.address, dev2.address, 6);
           memcpy(dev2.address, dev3.address, 6);
+          settings->printMenu();
         }
       } else if (menuItems[cursorIndex] == "Device Two") {
         if (title == "Devices") {
           dev2.menu->printMenu();
-        } else {
+        } else if (title == "Remove Device") {
           if (dev3.connected == false) {
             dev2.connected = false;
             devices->menuItems[2] = "";
@@ -274,17 +275,19 @@ class Menu {
           --devices->cursorMax;
           --removeDevices->cursorMax;
           memcpy(dev2.address, dev3.address, 6);
+          settings->printMenu();
         }
       } else if (menuItems[cursorIndex] == "Device Three") {
         if (title == "Devices") {
           dev3.menu->printMenu();
-        } else {
+        } else if (title == "Remove Device") {
           devices->menuItems[3] = "";
           dev3.connected = false;
           --clients;
           --prevClients;
           --devices->cursorMax;
           --removeDevices->cursorMax;
+          settings->printMenu();
         }
       } else if (menuItems[cursorIndex] == "Locate Device") {
         if (title == "Device One") {
@@ -345,7 +348,7 @@ class Menu {
 
     Menu(bool idk) {
       devices = new Menu("Devices", "<< Back", "", "", "", 0);
-      settings = new Menu("Settings", "<< Back", "Light Mode", "Speaker: On", "", 2);
+      settings = new Menu("Settings", "<< Back", "Light Mode", "Speaker: On", "Remove Device", 3);
       mainMenu = new Menu("Main Menu", "Devices", "Settings", "Roll Call", "Credits");
       credits = new Menu("Credits", "<< Back", "Emmett L.M.", "Joshua Curtis", "Sunay Agarwal", 0);
       removeDevices = new Menu("Remove Device", "<< Back", "", "", "", 0);
